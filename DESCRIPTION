@@ -32,3 +32,5 @@ Imports:
     visNetwork
 URL: https://github.com/AlexanderKononov/cytofCore
 BugReports: https://github.com/AlexanderKononov/cytofCore/issues
+Suggests: 
+    covr

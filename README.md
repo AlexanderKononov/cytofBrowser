@@ -4,7 +4,7 @@ cytofCore
 =========
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/AlexanderKononov/cytofCore.svg?branch=master)](https://travis-ci.org/AlexanderKononov/cytofCore) <!-- badges: end -->
+[![Travis build status](https://travis-ci.org/AlexanderKononov/cytofCore.svg?branch=master)](https://travis-ci.org/AlexanderKononov/cytofCore) [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/AlexanderKononov/cytofCore?branch=master&svg=true)](https://ci.appveyor.com/project/AlexanderKononov/cytofCore) [![Codecov test coverage](https://codecov.io/gh/AlexanderKononov/cytofCore/branch/master/graph/badge.svg)](https://codecov.io/gh/AlexanderKononov/cytofCore?branch=master) <!-- badges: end -->
 
 Description: The package focuses on analysis of CyTOF proteomic data. It is of the pipeline which starts from fcs files and goes to markers and cell type abundance correlation analysis through marker filtratio and cell clusterisation steps. Despite that, there are functions available for interactive R session, it is assumed that cytofCore are run with a graphical interface as R Shiny app GUI.
 
