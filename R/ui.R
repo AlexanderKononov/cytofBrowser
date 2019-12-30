@@ -16,7 +16,7 @@
 #'
 #' @examples
 #' cytofCoreGUI()
-cytofanalyzerGUI <-function(){
+cytofCoreGUI <-function(){
   cytofanalyzer_ui <- fluidPage(
     navbarPage("CyTOF pipeline",
                ################################################################### Tab 1

@@ -38,6 +38,7 @@ cytofanalyzer_server <- function(input, output){
     fcs_data$panel <- get_fcs_panel(fcs_data$fcs_raw)
     fcs_data$use_markers <- get_use_marker(fcs_data$panel)
     fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
+    print(fcs_data$cell_number)
     ## Transform row data to scaled data by set parameters
     if('asinh' %in% input$transformation_list){
       fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
