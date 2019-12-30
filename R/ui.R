@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-#' cytofanalyzerGUI()
+#' cytofCoreGUI()
 cytofanalyzerGUI <-function(){
   cytofanalyzer_ui <- fluidPage(
     navbarPage("CyTOF pipeline",
