@@ -1,0 +1,32 @@
+Package: cytofCore
+Title: Detail analysis and visualisation CyTOF data
+Version: 0.1.0
+Author: Alexander Kononov <kononov.nov@mail.ru>
+Maintainer: Alexander Kononov <kononov.nov@mail.ru>
+Description: The package focuses on analysis of CyTOF proteomic data.
+  It is of the pipeline which starts from fcs files and goes to markers
+  and cell type abundance correlation analysis through marker filtration
+  and cell clusterisation steps. Despite that, there are functions
+  available for interactive R session, it is assumed that cytofCore
+  are run with a graphical interface as R Shiny app GUI.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
+Imports: 
+    ConsensusClusterPlus,
+    FlowSOM,
+    RColorBrewer,
+    Rtsne,
+    corrplot,
+    d3heatmap,
+    dplyr,
+    flowCore,
+    ggplot2,
+    matrixStats,
+    reshape2,
+    shiny,
+    shinyFiles,
+    stats,
+    umap,
+    visNetwork
