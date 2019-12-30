@@ -155,8 +155,7 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
 #'
 #' @examples
 get_cell_number <- function(fcs_raw){
-  cell_number <- data.frame(cell_number = fsApply(fcs_raw, nrow))
-  cell_number$samples <- rownames(cell_number)
+  cell_number <- data.frame(smpl = sampleNames(fcs_raw),cell_number = fsApply(fcs_raw, nrow))
   return(cell_number)
 }
 

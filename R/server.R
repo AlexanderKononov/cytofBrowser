@@ -100,8 +100,8 @@ cytofanalyzer_server <- function(input, output){
 
   ##### Drawing the reactive plot of cell number
   output$smpl_hist_preparation <- renderPlot({
-    if(!is.null(fcs_data$cell_number)){return(NULL)}
-    ggplot(data = fcs_data$cell_number, aes(x = samples, y = cell_number))+
+    if(is.null(fcs_data$cell_number)){return(NULL)}
+    ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_number))+
       geom_bar(stat="identity")
   })
 
