@@ -48,10 +48,11 @@ cytofanalyzerGUI <-function(){
                                      hr(),
                                      h5("Analyzed markers"),
                                      verbatimTextOutput("mk_rested_data_preparation")
-                              ),
+                                     ),
                               column(6,
-                                     plotOutput("mk_hist_data_preparation"))
-
+                                     plotOutput("smpl_hist_preparation"),
+                                     plotOutput("mk_hist_data_preparation")
+                                     )
                             )
                           )
                         )

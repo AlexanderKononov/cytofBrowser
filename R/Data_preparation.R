@@ -145,6 +145,22 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
   return(fcs_outlier_by_quantile)
 }
 
+##### Extract cell number
+#' Extract cell number
+#'
+#' @param fcs_raw
+#'
+#' @return
+#' @import flowCore
+#'
+#' @examples
+get_cell_number <- function(fcs_raw){
+  cell_number <- data.frame(cell_number = fsApply(fcs_raw, nrow))
+  cell_number$samples <- rownames(cell_number)
+  return(cell_number)
+}
+
+
 #################
 ### tSNE plot ###
 #################

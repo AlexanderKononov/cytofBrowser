@@ -8,7 +8,6 @@ os:
   - osx
 
 r:
-  - 2.11
   - oldrel
   - release
   - devel

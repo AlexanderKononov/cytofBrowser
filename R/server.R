@@ -37,6 +37,7 @@ cytofanalyzer_server <- function(input, output){
     fcs_data$fcs_raw <- get_fcs_raw(fcs_data$md)
     fcs_data$panel <- get_fcs_panel(fcs_data$fcs_raw)
     fcs_data$use_markers <- get_use_marker(fcs_data$panel)
+    fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
     ## Transform row data to scaled data by set parameters
     if('asinh' %in% input$transformation_list){
       fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
@@ -87,13 +88,20 @@ cytofanalyzer_server <- function(input, output){
     fcs_data$use_markers
   })
 
-  ##### Drawing the reactive histogram plot
+  ##### Drawing the reactive histogram plot of marker expression
   output$mk_hist_data_preparation <- renderPlot({
     color_mk <- "Marker was not choose"
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
     ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)))) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
+  })
+
+  ##### Drawing the reactive plot of cell number
+  output$smpl_hist_preparation <- renderPlot({
+    if(!is.null(fcs_data$cell_number)){return(NULL)}
+    ggplot(data = fcs_data$cell_number, aes(x = samples, y = cell_number))+
+      geom_bar(stat="identity")
   })
 
   ########################
