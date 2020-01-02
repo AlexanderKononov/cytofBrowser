@@ -21,7 +21,7 @@
 #'
 #' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr
 #' @examples
-cytofanalyzer_server <- function(input, output){
+cytofCore_server <- function(input, output){
 
   ########################
   ### Data preparation ###
@@ -38,7 +38,6 @@ cytofanalyzer_server <- function(input, output){
     fcs_data$panel <- get_fcs_panel(fcs_data$fcs_raw)
     fcs_data$use_markers <- get_use_marker(fcs_data$panel)
     fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
-    print(fcs_data$cell_number)
     ## Transform row data to scaled data by set parameters
     if('asinh' %in% input$transformation_list){
       fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
@@ -47,11 +46,16 @@ cytofanalyzer_server <- function(input, output){
       fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
     }
     ## Preparing data for heatmap
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = 1000)
+    sampling_size <- 1000
+    method <- "tSNE"
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
   })
 
   ##### Drawing the reactive tSNE plot
   output$tSNE_plot_data_preparation <- renderPlot({
+    if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- names(fcs_data$use_markers)[1]
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
     ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
@@ -78,10 +82,24 @@ cytofanalyzer_server <- function(input, output){
                 multiple = TRUE)
   })
 
+  ##### Redrawing plot after chanch number of draw cells ar methods
+  observeEvent(input$redraw, {
+    if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    sampling_size <- 1000
+    method <- "tSNE"
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+  })
+
   ##### Update reactive object "fcs_data" after excluding markers
   observeEvent(input$exclud_mk_button, {
+    sampling_size <- 1000
+    method <- "tSNE"
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = 1000)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
   })
 
   ##### Reactively show current use_markers from "fcs_data" object
@@ -91,6 +109,7 @@ cytofanalyzer_server <- function(input, output){
 
   ##### Drawing the reactive histogram plot of marker expression
   output$mk_hist_data_preparation <- renderPlot({
+    if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- "Marker was not choose"
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
     ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)))) +
@@ -102,7 +121,8 @@ cytofanalyzer_server <- function(input, output){
   output$smpl_hist_preparation <- renderPlot({
     if(is.null(fcs_data$cell_number)){return(NULL)}
     ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_number))+
-      geom_bar(stat="identity")
+      geom_bar(stat="identity") +
+      coord_flip()
   })
 
   ########################
@@ -127,9 +147,27 @@ cytofanalyzer_server <- function(input, output){
     clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
     clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
     ## Create a data frame to UMAP or tSNE plotting
-    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, plot_ncell = 1000)
-    clusterisation$umap_df <- get_UMAP_dataframe(fcs_data$fcs_raw, fcs_data$use_markers,
-                                                 clusterisation$clust_markers, tsne_inds, clusterisation$cell_clustering)
+    sampling_size <- 2000
+    method <- "UMAP"
+    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.integer(input$n_cell_plot_clasterisation)}
+    if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
+    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, plot_ncell = sampling_size)
+    clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
+                                                 clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
+                                                 cell_clustering = clusterisation$cell_clustering, method = method)
+  })
+
+  ##### Redrawing plot after chanch number of draw cells ar methods
+  observeEvent(input$redraw_clasterisation, {
+    if(is.null(clusterisation$cell_clustering)){return(NULL)}
+    sampling_size <- 2000
+    method <- "UMAP"
+    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.integer(input$n_cell_plot_clasterisation)}
+    if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
+    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, plot_ncell = sampling_size)
+    clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
+                                                 clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
+                                                 cell_clustering = clusterisation$cell_clustering, method = method)
   })
 
   ##### Create UI to choose excluded markers from clusterisation
@@ -200,9 +238,7 @@ cytofanalyzer_server <- function(input, output){
     clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
     levels(clusterisation$umap_df$cluster)[grep(input$current_node_id, levels(clusterisation$umap_df$cluster))] <- input$new_cluster_name_clusterisation
     #clusterisation$umap_df$cluster[clusterisation$umap_df$cluster==input$current_node_id] <- input$new_cluster_name_clusterisation
-    print(clusterisation$umap_df)
     #clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
-    print(clusterisation$umap_df)
   })
 
   ##### Drawing the reactive and interactive UMAP plot

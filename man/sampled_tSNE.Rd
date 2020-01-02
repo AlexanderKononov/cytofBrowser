@@ -4,7 +4,7 @@
 \alias{sampled_tSNE}
 \title{Preparing data to tSNE}
 \usage{
-sampled_tSNE(fcs_raw, use_markers, sampling_size = 1000)
+sampled_tSNE(fcs_raw, use_markers, sampling_size = 1000, method = "tSNE")
 }
 \arguments{
 \item{sampling_size}{}

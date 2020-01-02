@@ -173,10 +173,11 @@ get_cell_number <- function(fcs_raw){
 #'
 #' @return
 #' @export
-#' @import Rtsne flowCore
+#' @import Rtsne flowCore umap
 #'
 #' @examples
-sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 1000){
+sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 1000, method = "tSNE"){
+  sampling_size <- as.integer(sampling_size/length(fcs_raw))
   expr <- fsApply(fcs_raw[,use_markers], exprs)
   sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
 
@@ -198,11 +199,20 @@ sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 1000){
   tsne_inds <- unlist(tsne_inds)
   tsne_expr <- expr[tsne_inds, use_markers]
 
-  ##### Run t-SNE
-  set.seed(1234)
-  tsne_result <- Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE)
-  #tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2])
-  tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2], expr[tsne_inds, use_markers])
+  if(method == "tSNE"){
+    ##### Run t-SNE
+    set.seed(1234)
+    tsne_result <- Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE)
+    #tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2])
+    tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2], expr[tsne_inds, use_markers])
+  }
+
+  if(method == "UMAP"){
+    ##### Run UMAP
+    umap_out <- umap(tsne_expr)
+    tsne_out <- data.frame(tSNE1 = umap_out$layout[, 1], tSNE2 = umap_out$layout[, 2], expr[tsne_inds, use_markers])
+  }
+
   colnames(tsne_out)[match(use_markers, colnames(tsne_out))] <- names(use_markers)
   return(tsne_out)
 }

@@ -28,11 +28,5 @@ library(cytofCore)
 #> loading 'cytofCore'
 #> Warning: replacing previous import 'dplyr::count' by 'matrixStats::count' when
 #> loading 'cytofCore'
-#> Warning: replacing previous import 'flowCore::alias' by 'stats::alias' when
-#> loading 'cytofCore'
-#> Warning: replacing previous import 'flowCore::filter' by 'stats::filter' when
-#> loading 'cytofCore'
-#> Warning: replacing previous import 'dplyr::lag' by 'stats::lag' when loading
-#> 'cytofCore'
 ## basic example code
 ```

@@ -4,6 +4,7 @@
 #library(d3heatmap)
 #library(shinyFiles)
 
+#' The main function to run cutofCore graphic interface
 #' @description Run graphical user interface for cytofanalyzer.
 #' The function runs the Shiny App in browser. The current package
 #' was created with assumption that it will be run with GUI mode
@@ -15,31 +16,52 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' cytofCoreGUI()
+#' }
 cytofCoreGUI <-function(){
-  cytofanalyzer_ui <- fluidPage(
+  cytofCore_ui <- fluidPage(
     navbarPage("CyTOF pipeline",
                ################################################################### Tab 1
                tabPanel("Data preparation",
                         sidebarLayout(
                           sidebarPanel(
                             shinyFilesButton('fcs_files', label='File fcs select', title='Please select fcs file', multiple=TRUE),
-                            checkboxGroupInput("transformation_list", label = h3("Transformations"),
+                            checkboxGroupInput("transformation_list", label = h4("Transformations"),
                                                choices = list("asinh" = "asinh", "outlier by quartile" = "outlier_by_quantile"),
                                                selected = c("asinh", "outlier_by_quantile")),
                             conditionalPanel(
                               condition = "input.transformation_list.includes('asinh')",
-                              numericInput("cofactor", label = h3("Cofactor for dividing"), value = 5)
+                              numericInput("cofactor", label = h4("Cofactor for dividing"), value = 5)
                             ),
                             conditionalPanel(
                               condition = "input.transformation_list.includes('outlier_by_quantile')",
-                              numericInput("quantile", label = h3("Quantile for outlier removing"), value = 0.01)
+                              numericInput("quantile", label = h4("Quantile for outlier removing"), value = 0.01)
                             ),
                             hr(),
                             actionButton("fcs_upload", label = "Upload")
                           ),
                           mainPanel(
-                            plotOutput("tSNE_plot_data_preparation"),
+                            fluidRow(
+                              column(4,
+                                     numericInput("n_cell_plot_data_preparation",
+                                                  label = h4("Number of cell to print"), value = 2000)
+                                     ),
+                              column(4,
+                                     selectInput("method_plot_data_preparation", label = h4("Visualisation method"),
+                                                 choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
+                                                 selected = "tSNE")
+                                     ),
+                              column(2, actionButton("redraw", label = "Redraw"))
+                            ),
+                            fluidRow(
+                              column(8,
+                                     plotOutput("tSNE_plot_data_preparation")
+                                     ),
+                              column(4,
+                                     plotOutput("smpl_hist_preparation")
+                                     )
+                            ),
                             fluidRow(
                               column(6,
                                      uiOutput("mk_target_data_preparation_ui"),
@@ -50,7 +72,6 @@ cytofCoreGUI <-function(){
                                      verbatimTextOutput("mk_rested_data_preparation")
                                      ),
                               column(6,
-                                     plotOutput("smpl_hist_preparation"),
                                      plotOutput("mk_hist_data_preparation")
                                      )
                             )
@@ -80,6 +101,18 @@ cytofCoreGUI <-function(){
                             actionButton("start_clusterization", label = "Clusterization")
                           ),
                           mainPanel(
+                            fluidRow(
+                              column(3,
+                                     numericInput("n_cell_plot_clasterisation",
+                                                  label = h4("Number of cell to print"), value = 2000)
+                              ),
+                              column(3,
+                                     selectInput("method_plot_clasterisation", label = h4("Visualisation method"),
+                                                 choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
+                                                 selected = "UMAP")
+                              ),
+                              column(2, actionButton("redraw_clasterisation", label = "Redraw"))
+                            ),
                             fluidRow(
                               plotOutput("tSNE_plot1_clust", click = "plot_click")
                             ),
@@ -143,6 +176,6 @@ cytofCoreGUI <-function(){
     )
   )
 
-  shinyApp(ui = cytofanalyzer_ui, server = cytofanalyzer_server)
+  shinyApp(ui = cytofCore_ui, server = cytofCore_server)
 }
 

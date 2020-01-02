@@ -9,7 +9,8 @@ get_UMAP_dataframe(
   use_markers,
   clust_markers,
   tsne_inds,
-  cell_clustering
+  cell_clustering,
+  method = "UMAP"
 )
 }
 \arguments{

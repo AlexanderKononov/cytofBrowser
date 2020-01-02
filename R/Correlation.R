@@ -57,7 +57,6 @@ get_abundance <- function(list_cell_ctDist){
 #' @param method
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 get_abundance_correlation <- function(abundence_data, method = "spearman"){
@@ -157,7 +156,6 @@ get_list_expData <- function(fcs_raw){
 #' @param signals
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 get_signals_between_clusters <- function(signals){
@@ -183,7 +181,6 @@ get_signals_between_clusters <- function(signals){
 #' @param signals
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 get_signals_in_cluster <- function(signals){
@@ -380,7 +377,6 @@ tt_sample_aggregator <- function(list_cell_ctDist, list_expData){
 #' @param method
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 backgraund_correlation <- function(list_cell_ctDist, list_expData, method = "spearman"){
@@ -417,7 +413,6 @@ backgraund_correlation <- function(list_cell_ctDist, list_expData, method = "spe
 #' @param list_expData
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 background_anova <- function(list_cell_ctDist ,list_expData){
@@ -541,7 +536,6 @@ target_type_data_extractor <- function(gene_ctDistr, bg_ctCor_data){
 #' @param method
 #'
 #' @return
-#' @import stats
 #'
 #' @examples
 htest_data_extractor <- function(abund_data, list_tt_expData, method = "spearman"){

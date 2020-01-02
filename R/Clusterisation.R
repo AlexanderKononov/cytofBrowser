@@ -198,15 +198,21 @@ get_inds_subset <- function(fcs_raw, plot_ncell = 1000){
 #' @param cell_clustering
 #'
 #' @return
-#' @import flowCore umap
+#' @import flowCore umap Rtsne
 #'
 #' @examples
-get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, cell_clustering){
+get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, cell_clustering, method = "UMAP"){
   expr <- fsApply(fcs_raw[,use_markers], exprs)
   tsne_expr <- expr[tsne_inds, clust_markers]
-  umap_out <- umap(tsne_expr)
-
-  umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$layout, cluster =  as.factor(cell_clustering)[tsne_inds])
+  if(method == "UMAP"){
+    umap_out <- umap(tsne_expr)
+    umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$layout, cluster =  as.factor(cell_clustering)[tsne_inds])
+  }
+  if(method == "tSNE"){
+    set.seed(1234)
+    umap_out <- Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE)
+    umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$Y, cluster =  as.factor(cell_clustering)[tsne_inds])
+  }
   colnames(umap_df) <- c(names(use_markers), "UMAP_1", "UMAP_2", "cluster")
   return(umap_df)
 }

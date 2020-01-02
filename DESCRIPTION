@@ -27,7 +27,6 @@ Imports:
     reshape2,
     shiny,
     shinyFiles,
-    stats,
     umap,
     visNetwork
 URL: https://github.com/AlexanderKononov/cytofCore
