@@ -60,6 +60,7 @@ cytofCore_server <- function(input, output){
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
     ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
       geom_point(size = 0.2) +
+      scale_color_gradient2(midpoint = 0.5, low = 'blue', mid = "white",  high = 'red') +
       labs(color = color_mk) +
       theme_bw()
   })
@@ -112,7 +113,8 @@ cytofCore_server <- function(input, output){
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- "Marker was not choose"
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
-    ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)))) +
+    print(fcs_data$tSNE)
+    ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
   })
