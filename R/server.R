@@ -259,6 +259,7 @@ cytofCore_server <- function(input, output){
 
   ##### Drawing the reactive and interactive graph with clusters
   output$network <- renderVisNetwork({
+    if(is.null(clusterisation$nodes)){return(NULL)}
     visNetwork(clusterisation$nodes, clusterisation$edges) %>%
       visInteraction(hover = TRUE) %>%
       visEvents(#hoverNode = "function(nodes) { Shiny.onInputChange('current_node_id', nodes);}",
@@ -311,8 +312,9 @@ cytofCore_server <- function(input, output){
     ggplot(data = gene_expression$deconvol_expr_median,
            aes(x=sample_ids, y=cell_clustering, fill= eval(parse(text = input$mk_deconvol_gene_expression)))) +
       geom_tile() +
+      theme_light() +
       labs(fill = input$mk_deconvol_gene_expression) +
-      geom_text(aes(label = round(cell_rate, 3)))
+      geom_text(aes(label = round(cell_rate, 3)), size = 5, color = 'white')
   })
 
   ########################
