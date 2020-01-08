@@ -247,9 +247,12 @@ cytofCore_server <- function(input, output){
   output$tSNE_plot1_clust <- renderPlot({
     if(is.null(clusterisation$umap_df)){return(NULL)}
     focus_node <- input$current_node_id
-    ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
-      geom_point(size = 0.8) +
-      geom_point(data = clusterisation$umap_df[clusterisation$umap_df$cluster == focus_node,], colour = "red")+
+    plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
+      geom_point(size = 0.8)
+    if(input$mk_target_clusterisation != 'cluster'){
+      plt <- plt + scale_color_gradient2(midpoint=0.5, low='blue', mid='white', high='red')
+    }
+    plt + geom_point(data = clusterisation$umap_df[clusterisation$umap_df$cluster == focus_node,], colour = 'black', size = 1)+
       labs(color = input$mk_target_clusterisation)+
       theme_bw()
   })
