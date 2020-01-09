@@ -78,9 +78,12 @@ cytofCore_server <- function(input, output){
   output$mk_subset_data_preparation_ui <- renderUI({
     color_mk <- names(fcs_data$use_markers)[1]
     if(is.null(fcs_data$use_markers)){ return(NULL)}
-    selectInput("exclude_mk_data_preparation", label = "exclude markers",
-                choices = names(fcs_data$use_markers),
-                multiple = TRUE)
+    fluidRow(
+      selectInput("exclude_mk_data_preparation", label = "exclude markers",
+                  choices = names(fcs_data$use_markers),
+                  multiple = TRUE),
+      actionButton("exclud_mk_button", label = "Exclude markers")
+    )
   })
 
   ##### Redrawing plot after chanch number of draw cells ar methods
@@ -106,6 +109,11 @@ cytofCore_server <- function(input, output){
   ##### Reactively show current use_markers from "fcs_data" object
   output$mk_rested_data_preparation <- renderPrint({
     fcs_data$use_markers
+  })
+  output$mk_excluded_data_preparation <- renderPrint({
+    excluded_mk <- get_use_marker(fcs_data$panel)
+    excluded_mk <- excluded_mk[!(excluded_mk %in% fcs_data$use_markers)]
+    return(excluded_mk)
   })
 
   ##### Drawing the reactive histogram plot of marker expression

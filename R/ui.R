@@ -66,13 +66,19 @@ cytofCoreGUI <-function(){
                               column(6,
                                      uiOutput("mk_target_data_preparation_ui"),
                                      uiOutput("mk_subset_data_preparation_ui"),
-                                     actionButton("exclud_mk_button", label = "Exclude markers"),
-                                     hr(),
-                                     h5("Analyzed markers"),
-                                     verbatimTextOutput("mk_rested_data_preparation")
                                      ),
                               column(6,
                                      plotOutput("mk_hist_data_preparation")
+                                     )
+                            ),
+                            fluidRow(
+                              column(6,
+                                     h4("Analyzed markers"),
+                                     verbatimTextOutput('mk_rested_data_preparation')
+                                     ),
+                              column(6,
+                                     h4("Excluded markers"),
+                                     verbatimTextOutput('mk_excluded_data_preparation')
                                      )
                             )
                           )
