@@ -167,6 +167,10 @@ cytofCoreGUI <-function(){
                                  plotOutput("abun_cor_plot", click = "abun_cor_click")
                           ),
                           column(6,
+                                 sliderInput('edges_threshold_abund_corr', "Edge weight threshold for graph",
+                                             min =0, max = 1, value = 0.5, step = 0.01),
+                                 sliderInput('gravity_abund_corr', "Gravity for graph",
+                                             min = -100, max = 0, value = -40, step = 1),
                                  visNetworkOutput("network2")
                           )
                         ),
