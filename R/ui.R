@@ -128,6 +128,10 @@ cytofCoreGUI <-function(){
                                      uiOutput("rename_clusterisation_ui")
                               ),
                               column(6,
+                                     sliderInput('edges_threshold_clusterisation', "Edge weight threshold for graph",
+                                                 min =0, max = 1, value = 0.5, step = 0.01),
+                                     sliderInput('gravity_clusterisation', "Gravity for graph",
+                                                 min = -100, max = 0, value = -40, step = 1),
                                      visNetworkOutput("network")
                               )
                             )

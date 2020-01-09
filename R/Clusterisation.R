@@ -137,14 +137,28 @@ get_edges <- function(cluster_euclidean_distance){
                       to = cluster_euclidean_distance$Cluster_2,
                       width  = as.numeric(log2(cluster_euclidean_distance$euclidean_distance)/2),
                       smooth = T)
-  mean_euclid_dist <- mean(cluster_euclidean_distance$euclidean_distance)
-  edges <- cluster_euclidean_distance[cluster_euclidean_distance$euclidean_distance<mean_euclid_dist,1:2]
-  colnames(edges) <- c("from", "to")
+  edges <- cluster_euclidean_distance[,1:3]
+  colnames(edges) <- c('from', 'to', 'width')
   edges$id <- rownames(edges)
   edges$from <- as.character(edges$from)
   edges$to <- as.character(edges$to)
-
+  edges$width <- as.numeric(edges$width)
   return(edges)
+}
+
+##### Filter out edges which have weight more than threshold
+#' Filter out edges which have weight more than threshold
+#'
+#' @param edges
+#' @param threshold
+#'
+#' @return
+#'
+#' @examples
+filter_edges <- function(edges, threshold){
+  cut_threshold <-  min(edges$width) + ((max(edges$width) - min(edges$width)) * threshold)
+  filtered_edges <- edges[edges$width <= cut_threshold, ]
+  return(filtered_edges)
 }
 
 #####  Get nodes

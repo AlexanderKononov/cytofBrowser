@@ -270,12 +270,18 @@ cytofCore_server <- function(input, output){
   ##### Drawing the reactive and interactive graph with clusters
   output$network <- renderVisNetwork({
     if(is.null(clusterisation$nodes)){return(NULL)}
-    visNetwork(clusterisation$nodes, clusterisation$edges) %>%
+    edges_threshold <- input$edges_threshold_clusterisation
+    if(is.null(input$edges_threshold_clusterisation)){edges_threshold <- 0.5}
+    gravity <- input$gravity_clusterisation
+    if(is.null(input$gravity_clusterisation)){gravity <- -40}
+    edges <- filter_edges(clusterisation$edges, edges_threshold)
+
+    visNetwork(clusterisation$nodes, edges) %>%
       visInteraction(hover = TRUE) %>%
       visEvents(#hoverNode = "function(nodes) { Shiny.onInputChange('current_node_id', nodes);}",
-                select = "function(nodes) { Shiny.onInputChange('current_node_id', nodes.nodes);}")# %>%
-      #visPhysics(solver = "forceAtlas2Based",
-      #           forceAtlas2Based = list(gravitationalConstant = -40))
+                select = "function(nodes) { Shiny.onInputChange('current_node_id', nodes.nodes);}") %>%
+      visPhysics(solver = "forceAtlas2Based",
+                 forceAtlas2Based = list(gravitationalConstant = gravity))
   })
 
 
