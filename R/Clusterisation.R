@@ -217,6 +217,25 @@ get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, c
   return(umap_df)
 }
 
+##### Create the data table to draw the abundance barplot
+#' Create the data table to draw the abundance barplot
+#'
+#' @param fcs_raw
+#' @param cell_clustering
+#'
+#' @return
+#' @import flowCore
+#'
+#' @examples
+get_abundance_dataframe <- function(fcs_raw, cell_clustering){
+  sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
+  abundance_data <- table(cell_clustering, sample_ids)
+  abundance_data <- t(t(abundance_data) / colSums(abundance_data)) * 100
+  abundance_data <- as.data.frame(abundance_data)
+  colnames(abundance_data) <- c('cluster', 'sample_ids', 'abundance')
+  return(abundance_data)
+}
+
 ##### Merging two or more clusters within cluster annotating vector
 #' Merging two or more clusters within cluster annotating vector
 #'

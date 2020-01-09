@@ -114,7 +114,12 @@ cytofCoreGUI <-function(){
                               column(2, actionButton("redraw_clasterisation", label = "Redraw"))
                             ),
                             fluidRow(
-                              plotOutput("tSNE_plot1_clust", click = "plot_click")
+                              column(8,
+                                     plotOutput("tSNE_plot1_clust", click = "plot_click")
+                                     ),
+                              column(4,
+                                     plotOutput('abundance_clust')
+                                     )
                             ),
                             fluidRow(
                               column(6,
@@ -130,7 +135,7 @@ cytofCoreGUI <-function(){
                         )
                ),
                ################################################################### Tab 3
-               tabPanel("Gene expression",
+               tabPanel("Marker level",
                         fluidRow(
                           column(3,
                                  selectInput("method_summarize_expression", label = h4("summariz method"),

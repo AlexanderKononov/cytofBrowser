@@ -156,6 +156,8 @@ cytofCore_server <- function(input, output){
     clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                  clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
                                                  cell_clustering = clusterisation$cell_clustering, method = method)
+    clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                           cell_clustering = clusterisation$cell_clustering)
   })
 
   ##### Redrawing plot after chanch number of draw cells ar methods
@@ -256,6 +258,15 @@ cytofCore_server <- function(input, output){
       theme_bw()
   })
 
+  ##### Drawing the reactive abundance plot
+  output$abundance_clust <- renderPlot({
+    if(is.null(clusterisation$umap_df)){return(NULL)}
+    plt <- ggplot(clusterisation$abundance_df, aes(x = sample_ids, y = abundance, fill = cluster)) +
+      geom_bar(stat = 'identity') +
+      theme(axis.text.x = element_text(angle = 90))
+    return(plt)
+  })
+
   ##### Drawing the reactive and interactive graph with clusters
   output$network <- renderVisNetwork({
     if(is.null(clusterisation$nodes)){return(NULL)}
@@ -334,7 +345,8 @@ cytofCore_server <- function(input, output){
       geom_tile() +
       theme_light() +
       labs(fill = input$mk_deconvol_gene_expression) +
-      geom_text(aes(label = round(cell_rate, 3)), size = 5, color = 'white')
+      geom_text(aes(label = round(cell_rate, 3)), size = 5, color = 'white') +
+      theme(axis.text.x = element_text(angle = 90))
   })
 
   ########################
