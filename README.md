@@ -11,16 +11,41 @@ Description: The package focuses on analysis of CyTOF proteomic data. It is of t
 Installation
 ------------
 
-You can install the released version of cytofCore from [Bioconductor](https://www.bioconductor.org) with:
+Presently you can instal the develop version of this programme:
 
 ``` r
-install.packages("cytofCore")
+if (!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
+    
+devtools::install_github("AlexanderKononov/cytofCore")
+```
+
+On the current stage of the project develop there are few dependency packages which don't instal and deploy automatically, such as (flowCore, FlowSOM, ConsensusClusterPlus). I advise to instal they manually:
+
+``` r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+    
+BiocManager::install("flowCore")
+BiocManager::install("FlowSOM")
+BiocManager::install("ConsensusClusterPlus")
+```
+
+Complete list of dependencies is listed in the DESCRIPTION and in the file Library\_louncher.R
+
+In a future, you can install the released version of cytofCore from [Bioconductor](https://www.bioconductor.org) with:
+
+``` r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("cytofCore")
 ```
 
 Example
 -------
 
-This is a basic example which shows you how to solve a common problem:
+This is a basic example which shows you how to run the cytofCore:
 
 ``` r
 library(cytofCore)
@@ -28,5 +53,8 @@ library(cytofCore)
 #> loading 'cytofCore'
 #> Warning: replacing previous import 'dplyr::count' by 'matrixStats::count' when
 #> loading 'cytofCore'
-## basic example code
+```
+
+``` r
+cytofCoreGUI()
 ```

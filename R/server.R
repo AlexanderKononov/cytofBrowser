@@ -113,7 +113,6 @@ cytofCore_server <- function(input, output){
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- "Marker was not choose"
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
-    print(fcs_data$tSNE)
     ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
@@ -276,11 +275,32 @@ cytofCore_server <- function(input, output){
   ##### Create "gene_expression" as reactive object with grouped expression information
   gene_expression <- reactiveValues()
   observeEvent(input$start_clusterization, {
+    summarize_mode <- input$method_summarize_expression
+    if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
     ## Preparing data for heatmap
-    gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_data$fcs_raw, fcs_data$use_markers,
-                                                                          clusterisation$cell_clustering)
-    gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_data$fcs_raw, fcs_data$use_markers,
-                                                                   clusterisation$cell_clustering)
+    gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                          use_markers = fcs_data$use_markers,
+                                                                          cell_clustering = clusterisation$cell_clustering,
+                                                                          summarize_mode = summarize_mode)
+    gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                   use_markers = fcs_data$use_markers,
+                                                                   cell_clustering = clusterisation$cell_clustering,
+                                                                   summarize_mode = summarize_mode)
+  })
+
+  ##### Redrawing hm after chanch summarize mode
+  observeEvent(input$redraw_expression, {
+    summarize_mode <- input$method_summarize_expression
+    if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
+    ## Preparing data for heatmap
+    gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                          use_markers = fcs_data$use_markers,
+                                                                          cell_clustering = clusterisation$cell_clustering,
+                                                                          summarize_mode = summarize_mode)
+    gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                   use_markers = fcs_data$use_markers,
+                                                                   cell_clustering = clusterisation$cell_clustering,
+                                                                   summarize_mode = summarize_mode)
   })
 
   ##### Drawing expression heatmap of markers per clusters

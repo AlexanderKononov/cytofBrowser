@@ -132,6 +132,14 @@ cytofCoreGUI <-function(){
                ################################################################### Tab 3
                tabPanel("Gene expression",
                         fluidRow(
+                          column(3,
+                                 selectInput("method_summarize_expression", label = h4("summariz method"),
+                                             choices = list('median' = "median", 'mean' = "mean"),
+                                             selected = 'median')
+                          ),
+                          column(2, actionButton("redraw_expression", label = "Redraw"))
+                        ),
+                        fluidRow(
                           d3heatmapOutput('cluster_heatmap')
                         ),
                         fluidRow(
