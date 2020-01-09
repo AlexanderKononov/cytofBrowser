@@ -46,9 +46,9 @@ cytofCore_server <- function(input, output){
       fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
     }
     ## Preparing data for heatmap
-    sampling_size <- 1000
+    sampling_size <- 0.5
     method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
   })
@@ -86,18 +86,18 @@ cytofCore_server <- function(input, output){
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw, {
     if(is.null(fcs_data$fcs_raw)){return(NULL)}
-    sampling_size <- 1000
+    sampling_size <- 0.5
     method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
   })
 
   ##### Update reactive object "fcs_data" after excluding markers
   observeEvent(input$exclud_mk_button, {
-    sampling_size <- 1000
+    sampling_size <- 0.5
     method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.integer(input$n_cell_plot_data_preparation)}
+    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
     fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
@@ -148,11 +148,11 @@ cytofCore_server <- function(input, output){
     clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
     clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
     ## Create a data frame to UMAP or tSNE plotting
-    sampling_size <- 2000
+    sampling_size <- 0.5
     method <- "UMAP"
-    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.integer(input$n_cell_plot_clasterisation)}
+    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
     if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, plot_ncell = sampling_size)
+    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
     clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                  clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
                                                  cell_clustering = clusterisation$cell_clustering, method = method)
@@ -163,11 +163,11 @@ cytofCore_server <- function(input, output){
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
     if(is.null(clusterisation$cell_clustering)){return(NULL)}
-    sampling_size <- 2000
+    sampling_size <- 0.5
     method <- "UMAP"
-    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.integer(input$n_cell_plot_clasterisation)}
+    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
     if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, plot_ncell = sampling_size)
+    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
     clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                  clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
                                                  cell_clustering = clusterisation$cell_clustering, method = method)

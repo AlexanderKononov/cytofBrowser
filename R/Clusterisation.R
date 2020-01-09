@@ -179,10 +179,12 @@ get_nodes <- function(edges, cell_clustering){
 #' @import flowCore
 #'
 #' @examples
-get_inds_subset <- function(fcs_raw, plot_ncell = 1000){
+get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
   sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
   inds <- split(1:length(sample_ids), sample_ids)
-  tsne_ncells <- pmin(table(sample_ids), plot_ncell)
+  #tsne_ncells <- pmin(table(sample_ids), sampling_size)
+  tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
+  names(tsne_ncells) <- names(table(sample_ids))
   tsne_inds <- lapply(names(inds), function(i){s <- sample(inds[[i]], tsne_ncells[i], replace = FALSE)})
   tsne_inds <- unlist(tsne_inds)
   return(tsne_inds)

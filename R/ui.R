@@ -45,7 +45,7 @@ cytofCoreGUI <-function(){
                             fluidRow(
                               column(4,
                                      numericInput("n_cell_plot_data_preparation",
-                                                  label = h4("Number of cell to print"), value = 2000)
+                                                  label = h4("Cell fraction to print"), value = 0.5, step = 0.1)
                                      ),
                               column(4,
                                      selectInput("method_plot_data_preparation", label = h4("Visualisation method"),
@@ -82,17 +82,17 @@ cytofCoreGUI <-function(){
                tabPanel("Clusterisation",
                         sidebarLayout(
                           sidebarPanel(
-                            radioButtons("mode_k_choice", label = h3("Choose of number of clusters"),
+                            radioButtons("mode_k_choice", label = h4("Choose of number of clusters"),
                                          choices = list("Automatically detect optimum" = 1, "Manually choose" = 2),
                                          selected = 1),
                             conditionalPanel(
                               condition = "input.mode_k_choice == 1",
-                              numericInput("rate_var_explan", label = h3("Rate of explained variance"), value = 0.9),
-                              numericInput("maxK", label = h3("Max number of clusters"), value = 20)
+                              numericInput("rate_var_explan", label = h4("Rate of explained variance"), value = 0.9),
+                              numericInput("maxK", label = h4("Max number of clusters"), value = 20)
                             ),
                             conditionalPanel(
                               condition = "input.mode_k_choice == 2",
-                              numericInput("k", label = h3("Choose number of clusters"), value = 8)
+                              numericInput("k", label = h4("Choose number of clusters"), value = 8)
                             ),
                             uiOutput("mk_subset_clusterisation_ui"),
                             #selectInput("exclude_mk_clusterisation", label = "exclude markers from clusterisation",
@@ -104,7 +104,7 @@ cytofCoreGUI <-function(){
                             fluidRow(
                               column(3,
                                      numericInput("n_cell_plot_clasterisation",
-                                                  label = h4("Number of cell to print"), value = 2000)
+                                                  label = h4("Cell fraction to print"), value = 0.5, step = 0.1)
                               ),
                               column(3,
                                      selectInput("method_plot_clasterisation", label = h4("Visualisation method"),
