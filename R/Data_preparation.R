@@ -43,6 +43,7 @@ get_fcs_metadata <- function(fcs_files){
 get_fcs_raw <- function(md){
   pathes <- as.vector(md$path)
   fcs_raw <- read.flowSet(pathes, transformation = FALSE, truncate_max_range = FALSE)
+  sampleNames(fcs_raw) <- gsub(".fcs", "", sampleNames(fcs_raw))
   return(fcs_raw)
 }
 
