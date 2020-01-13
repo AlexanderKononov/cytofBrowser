@@ -1,7 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+![picture](img/interaction_logo1.jpg)
+
 cytofCore
-=========
+---------
 
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.com/AlexanderKononov/cytofCore.svg?branch=master)](https://travis-ci.com/AlexanderKononov/cytofCore) [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/AlexanderKononov/cytofCore?branch=master&svg=true)](https://ci.appveyor.com/project/AlexanderKononov/cytofCore) [![Codecov test coverage](https://codecov.io/gh/AlexanderKononov/cytofCore/branch/master/graph/badge.svg)](https://codecov.io/gh/AlexanderKononov/cytofCore?branch=master) <!-- badges: end -->

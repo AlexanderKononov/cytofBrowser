@@ -13,7 +13,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-# cytofCore
+![picture](img/interaction_logo1.jpg)
+
+## cytofCore
 
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.com/AlexanderKononov/cytofCore.svg?branch=master)](https://travis-ci.com/AlexanderKononov/cytofCore)
