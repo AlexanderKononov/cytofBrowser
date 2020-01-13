@@ -42,6 +42,15 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("cytofCore")
 ```
 
+Run the cytofCore
+-----------------
+
+I assumed that this programme will be used with GUI as Shiny App.
+
+``` r
+cytofCoreGUI()
+```
+
 Example
 -------
 
