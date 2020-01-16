@@ -52,7 +52,11 @@ cytofCoreGUI <-function(){
                                                  choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
                                                  selected = "tSNE")
                                      ),
-                              column(2, actionButton("redraw", label = "Redraw"))
+                              column(2, actionButton("redraw", label = "Redraw")),
+                              column(2,
+                                     actionButton("draw_simple_data_prep", label = "Simple"),
+                                     actionButton("draw_advance_data_prep", label = "Advance")
+                                     )
                             ),
                             fluidRow(
                               column(8,
