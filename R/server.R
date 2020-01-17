@@ -19,7 +19,7 @@
 #'
 #' @return
 #'
-#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr
+#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr neo4R
 #' @examples
 cytofCore_server <- function(input, output){
 
@@ -416,6 +416,7 @@ cytofCore_server <- function(input, output){
     })
   })
   observeEvent(input$simple_corr_settings,{
+    output$corr_analysis_settings_ui <- NULL
     corr_settings$method = "spearman"
     corr_settings$pValue = 0.01
     corr_settings$threshold = 0.1
@@ -498,6 +499,16 @@ cytofCore_server <- function(input, output){
     }
     return(focus_corr_data)
   }))
+
+  ########################
+  ####      GDB       ####
+  ########################
+
+  gdb_set <- reactiveValues()
+  observeEvent(input$corr_analysis, {
+    gdb_set$neo_api <- get_neo_api()
+
+  })
 
 
 }
