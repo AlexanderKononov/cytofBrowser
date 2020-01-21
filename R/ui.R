@@ -58,6 +58,7 @@ cytofCoreGUI <-function(){
                                      actionButton("draw_advance_data_prep", label = "Advance")
                                      )
                             ),
+                            fluidRow(uiOutput('dvance_data_prep_ui')),
                             fluidRow(
                               column(8,
                                      plotOutput("tSNE_plot_data_preparation")

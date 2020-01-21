@@ -19,7 +19,7 @@
 #'
 #' @return
 #'
-#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr
+#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr neo4R
 #' @examples
 cytofCore_server <- function(input, output){
 
@@ -31,6 +31,7 @@ cytofCore_server <- function(input, output){
 
   ##### Create "fcs_data" as reactive object to store the CyTOF data
   fcs_data <-reactiveValues()
+  data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$fcs_upload, {
     ## Get row data fcs files
     fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
@@ -45,12 +46,34 @@ cytofCore_server <- function(input, output){
     if('outlier_by_quantile' %in% isolate(input$transformation_list)){
       fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
     }
-    ## Preparing data for heatmap
+    ## Preparing data for scatterplot
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+  })
+
+  #### Create UI to simple panele
+  observeEvent(input$draw_simple_data_prep, {
+    output$dvance_data_prep_ui <- NULL
+  })
+
+  #### Create UI to advice panele
+  observeEvent(input$draw_advance_data_prep, {
+    output$dvance_data_prep_ui <- renderUI({
+      fluidRow(
+        h4("Options to tSNE plotting"),
+        column(3, numericInput("data_prep_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
+        column(3, numericInput("data_prep_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
+        column(3, numericInput("data_prep_max_iter", "Iterations", value = 1000, step = 500))
+      )
+    })
   })
 
   ##### Drawing the reactive tSNE plot
@@ -89,21 +112,31 @@ cytofCore_server <- function(input, output){
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw, {
     if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
   })
 
   ##### Update reactive object "fcs_data" after excluding markers
   observeEvent(input$exclud_mk_button, {
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
   })
 
   ##### Reactively show current use_markers from "fcs_data" object
@@ -411,26 +444,42 @@ cytofCore_server <- function(input, output){
           numericInput("corr_bg_anova_alpha", "background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
           numericInput("corr_bg_ctCor_alpha", "Background corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
           numericInput("corr_gene_ctCor_alpha", "Gene corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+        )),
+        column(2, wellPanel(
+          actionButton('neo4j_activaation', "Neo4j"),
+          uiOutput('neo4j_ui')
         ))
       )
     })
   })
   observeEvent(input$simple_corr_settings,{
-    corr_settings$method = "spearman"
-    corr_settings$pValue = 0.01
-    corr_settings$threshold = 0.1
-    corr_settings$bg_anova_alpha = 0.01
-    corr_settings$bg_ctCor_alpha = 0.01
-    corr_settings$gene_ctCor_alpha = 0.01
+    output$corr_analysis_settings_ui <- NULL
+    corr_settings$method <- "spearman"
+    corr_settings$pValue <- 0.01
+    corr_settings$threshold <- 0.1
+    corr_settings$bg_anova_alpha <- 0.01
+    corr_settings$bg_ctCor_alpha <- 0.01
+    corr_settings$gene_ctCor_alpha <- 0.01
   })
 
   observeEvent(input$advanced_corr_settings, {
-    corr_settings$method = input$method
-    corr_settings$pValue = input$corr_pValue
-    corr_settings$threshold = input$corr_threshold
-    corr_settings$bg_anova_alpha = input$corr_bg_anova_alpha
-    corr_settings$bg_ctCor_alpha = input$corr_bg_ctCor_alpha
-    corr_settings$gene_ctCor_alpha = input$corr_gene_ctCor_alpha
+    if(!is.null(input$method)){corr_settings$method <- input$method}
+    if(!is.null(input$corr_pValue)){corr_settings$pValue <- input$corr_pValue}
+    if(!is.null(input$corr_threshold)){corr_settings$threshold <- input$corr_threshold}
+    if(!is.null(input$corr_bg_anova_alpha)){corr_settings$bg_anova_alpha <- input$corr_bg_anova_alpha}
+    if(!is.null(input$corr_bg_ctCor_alpha)){corr_settings$bg_ctCor_alpha <- input$corr_bg_ctCor_alpha}
+    if(!is.null(input$corr_gene_ctCor_alpha)){corr_settings$gene_ctCor_alpha <- input$corr_gene_ctCor_alpha}
+  })
+
+  observeEvent(input$neo4j_activaation, {
+    output$neo4j_ui <- renderUI({
+      fluidRow(
+        h5("Check that neo4j database is created and activated"),
+        textInput('user_neo4j', label = h4("User name"), value = "neo4j"),
+        textInput('password_neo4j', label = h4("Password"), value = "password"),
+        actionButton('neo4j_export', "Export")
+      )
+    })
   })
 
   observeEvent(input$corr_analysis, {
@@ -498,6 +547,33 @@ cytofCore_server <- function(input, output){
     }
     return(focus_corr_data)
   }))
+
+  ########################
+  ####      GDB       ####
+  ########################
+
+  observeEvent(input$neo4j_export,{
+    user <- "neo4j"
+    password <- "password"
+    if(!is.null(input$user_neo4j)){user <- input$user_neo4j}
+    if(!is.null(input$password_neo4j)){password <- input$password_neo4j}
+    gdb <- get_neo_api(user = input$user_neo4j, password = input$password_neo4j)
+    ping_answer <- neo_api_ping(gdb)
+    if(!is.null(ping_answer)){
+      showModal(modalDialog(title = "Error with Neo4j", ping_answer, easyClose = TRUE))
+      return(NULL)
+    }
+    if(!is.null(fcs_data$fcs_raw)){add_sample_GDB(fcs_data$fcs_raw, gdb)}
+    if(!is.null(fcs_data$use_markers)){add_marker_GDB(fcs_data$use_markers, gdb)}
+    if(!is.null(clusterisation$cell_clustering)){
+      add_cluster_GDB(clusterisation$cell_clustering, gdb)
+      add_populatio_GDB(clusterisation$cell_clustering_list, gdb)
+      add_observation_GDB(gdb)
+      add_phenounite_GDB(gdb)
+    }
+    if(!is.null(correlation$signals_between_clusters)){add_signals_between_clusters_GDB(correlation$signals_between_clusters, gdb)}
+    if(!is.null(correlation$signals_in_cluster)){add_signals_in_cluster_GDB(correlation$signals_in_cluster, gdb)}
+  })
 
 
 }
