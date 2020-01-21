@@ -31,6 +31,7 @@ cytofCore_server <- function(input, output){
 
   ##### Create "fcs_data" as reactive object to store the CyTOF data
   fcs_data <-reactiveValues()
+  data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$fcs_upload, {
     ## Get row data fcs files
     fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
@@ -45,12 +46,34 @@ cytofCore_server <- function(input, output){
     if('outlier_by_quantile' %in% isolate(input$transformation_list)){
       fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
     }
-    ## Preparing data for heatmap
+    ## Preparing data for scatterplot
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+  })
+
+  #### Create UI to simple panele
+  observeEvent(input$draw_simple_data_prep, {
+    output$dvance_data_prep_ui <- NULL
+  })
+
+  #### Create UI to advice panele
+  observeEvent(input$draw_advance_data_prep, {
+    output$dvance_data_prep_ui <- renderUI({
+      fluidRow(
+        h4("Options to tSNE plotting"),
+        column(3, numericInput("data_prep_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
+        column(3, numericInput("data_prep_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
+        column(3, numericInput("data_prep_max_iter", "Iterations", value = 1000, step = 500))
+      )
+    })
   })
 
   ##### Drawing the reactive tSNE plot
@@ -89,21 +112,31 @@ cytofCore_server <- function(input, output){
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw, {
     if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
   })
 
   ##### Update reactive object "fcs_data" after excluding markers
   observeEvent(input$exclud_mk_button, {
+    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
     sampling_size <- 0.5
     method <- "tSNE"
     if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
     if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
     fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method)
+    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                  perplexity = data_prep_settings$perplexity,
+                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
   })
 
   ##### Reactively show current use_markers from "fcs_data" object
