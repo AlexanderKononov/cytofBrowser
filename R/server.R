@@ -411,27 +411,42 @@ cytofCore_server <- function(input, output){
           numericInput("corr_bg_anova_alpha", "background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
           numericInput("corr_bg_ctCor_alpha", "Background corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
           numericInput("corr_gene_ctCor_alpha", "Gene corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+        )),
+        column(2, wellPanel(
+          actionButton('neo4j_activaation', "Neo4j"),
+          uiOutput('neo4j_ui')
         ))
       )
     })
   })
   observeEvent(input$simple_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
-    corr_settings$method = "spearman"
-    corr_settings$pValue = 0.01
-    corr_settings$threshold = 0.1
-    corr_settings$bg_anova_alpha = 0.01
-    corr_settings$bg_ctCor_alpha = 0.01
-    corr_settings$gene_ctCor_alpha = 0.01
+    corr_settings$method <- "spearman"
+    corr_settings$pValue <- 0.01
+    corr_settings$threshold <- 0.1
+    corr_settings$bg_anova_alpha <- 0.01
+    corr_settings$bg_ctCor_alpha <- 0.01
+    corr_settings$gene_ctCor_alpha <- 0.01
   })
 
   observeEvent(input$advanced_corr_settings, {
-    corr_settings$method = input$method
-    corr_settings$pValue = input$corr_pValue
-    corr_settings$threshold = input$corr_threshold
-    corr_settings$bg_anova_alpha = input$corr_bg_anova_alpha
-    corr_settings$bg_ctCor_alpha = input$corr_bg_ctCor_alpha
-    corr_settings$gene_ctCor_alpha = input$corr_gene_ctCor_alpha
+    if(!is.null(input$method)){corr_settings$method <- input$method}
+    if(!is.null(input$corr_pValue)){corr_settings$pValue <- input$corr_pValue}
+    if(!is.null(input$corr_threshold)){corr_settings$threshold <- input$corr_threshold}
+    if(!is.null(input$corr_bg_anova_alpha)){corr_settings$bg_anova_alpha <- input$corr_bg_anova_alpha}
+    if(!is.null(input$corr_bg_ctCor_alpha)){corr_settings$bg_ctCor_alpha <- input$corr_bg_ctCor_alpha}
+    if(!is.null(input$corr_gene_ctCor_alpha)){corr_settings$gene_ctCor_alpha <- input$corr_gene_ctCor_alpha}
+  })
+
+  observeEvent(input$neo4j_activaation, {
+    output$neo4j_ui <- renderUI({
+      fluidRow(
+        h5("Check that neo4j database is created and activated"),
+        textInput('user_neo4j', label = h4("User name"), value = "neo4j"),
+        textInput('password_neo4j', label = h4("Password"), value = "password"),
+        actionButton('neo4j_export', "Export")
+      )
+    })
   })
 
   observeEvent(input$corr_analysis, {
@@ -504,10 +519,27 @@ cytofCore_server <- function(input, output){
   ####      GDB       ####
   ########################
 
-  gdb_set <- reactiveValues()
-  observeEvent(input$corr_analysis, {
-    gdb_set$neo_api <- get_neo_api()
-
+  observeEvent(input$neo4j_export,{
+    user <- "neo4j"
+    password <- "password"
+    if(!is.null(input$user_neo4j)){user <- input$user_neo4j}
+    if(!is.null(input$password_neo4j)){password <- input$password_neo4j}
+    gdb <- get_neo_api(user = input$user_neo4j, password = input$password_neo4j)
+    ping_answer <- neo_api_ping(gdb)
+    if(!is.null(ping_answer)){
+      showModal(modalDialog(title = "Error with Neo4j", ping_answer, easyClose = TRUE))
+      return(NULL)
+    }
+    if(!is.null(fcs_data$fcs_raw)){add_sample_GDB(fcs_data$fcs_raw, gdb)}
+    if(!is.null(fcs_data$use_markers)){add_marker_GDB(fcs_data$use_markers, gdb)}
+    if(!is.null(clusterisation$cell_clustering)){
+      add_cluster_GDB(clusterisation$cell_clustering, gdb)
+      add_populatio_GDB(clusterisation$cell_clustering_list, gdb)
+      add_observation_GDB(gdb)
+      add_phenounite_GDB(gdb)
+    }
+    if(!is.null(correlation$signals_between_clusters)){add_signals_between_clusters_GDB(correlation$signals_between_clusters, gdb)}
+    if(!is.null(correlation$signals_in_cluster)){add_signals_in_cluster_GDB(correlation$signals_in_cluster, gdb)}
   })
 
 

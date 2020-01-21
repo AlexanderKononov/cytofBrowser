@@ -82,7 +82,7 @@ get_cluster_annotation <- function(fcs_raw, som, mc, k){
   l <- fsApply(fcs_raw, nrow)
   l <- c(0, sapply(1:length(l), function(x) sum(l[1:x])))
   cell_clustering_list <- sapply(2:length(l), function(x) cell_clustering[(l[x-1]+1):l[x]])
-  names(cell_clustering_list) <- pData(fcs_raw)$name
+  names(cell_clustering_list) <- sampleNames(fcs_raw)
   return(cell_clustering_list)
 }
 
