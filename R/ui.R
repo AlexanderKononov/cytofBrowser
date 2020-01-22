@@ -122,8 +122,13 @@ cytofCoreGUI <-function(){
                                                  choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
                                                  selected = "UMAP")
                               ),
-                              column(2, actionButton("redraw_clasterisation", label = "Redraw"))
+                              column(2, actionButton("redraw_clasterisation", label = "Redraw")),
+                              column(2,
+                                     actionButton("draw_simple_claster", label = "Simple"),
+                                     actionButton("draw_advance_claster", label = "Advance")
+                              )
                             ),
+                            fluidRow(uiOutput('dvance_cluster_ui')),
                             fluidRow(
                               column(8,
                                      plotOutput("tSNE_plot1_clust", click = "plot_click")

@@ -177,7 +177,8 @@ get_cell_number <- function(fcs_raw){
 #' @import Rtsne flowCore umap
 #'
 #' @examples
-sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE", perplexity = 30, theta = 0.5, max_iter = 1000){
+sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE",
+                         perplexity = 30, theta = 0.5, max_iter = 1000){
   #sampling_size <- as.integer(sampling_size/length(fcs_raw))
   expr <- fsApply(fcs_raw[,use_markers], exprs)
   sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))

@@ -173,6 +173,8 @@ cytofCore_server <- function(input, output){
 
   ##### Create "clusterisation" as reactive object to store the cluster information
   clusterisation <- reactiveValues()
+  cluster_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
+
   observeEvent(input$start_clusterization, {
     ## Clusterisation with set parameters
     clusterisation$clust_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_clusterisation)]
@@ -189,6 +191,9 @@ cytofCore_server <- function(input, output){
     clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
     clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
     ## Create a data frame to UMAP or tSNE plotting
+    if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
+    if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
+    if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
     sampling_size <- 0.5
     method <- "UMAP"
     if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
@@ -196,14 +201,36 @@ cytofCore_server <- function(input, output){
     tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
     clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                  clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
-                                                 cell_clustering = clusterisation$cell_clustering, method = method)
+                                                 cell_clustering = clusterisation$cell_clustering, method = method,
+                                                 perplexity = cluster_settings$perplexity,
+                                                 theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
     clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
                                                            cell_clustering = clusterisation$cell_clustering)
+  })
+
+  #### Create UI to simple panele
+  observeEvent(input$draw_simple_claster, {
+    output$dvance_cluster_ui <- NULL
+  })
+
+  #### Create UI to advice panele
+  observeEvent(input$draw_advance_claster, {
+    output$dvance_cluster_ui <- renderUI({
+      fluidRow(
+        h4("Options to tSNE plotting"),
+        column(3, numericInput("cluster_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
+        column(3, numericInput("cluster_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
+        column(3, numericInput("cluster_max_iter", "Iterations", value = 1000, step = 500))
+      )
+    })
   })
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
     if(is.null(clusterisation$cell_clustering)){return(NULL)}
+    if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
+    if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
+    if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
     sampling_size <- 0.5
     method <- "UMAP"
     if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
@@ -211,7 +238,9 @@ cytofCore_server <- function(input, output){
     tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
     clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                  clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
-                                                 cell_clustering = clusterisation$cell_clustering, method = method)
+                                                 cell_clustering = clusterisation$cell_clustering, method = method,
+                                                 perplexity = cluster_settings$perplexity,
+                                                 theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
   })
 
   ##### Create UI to choose excluded markers from clusterisation
