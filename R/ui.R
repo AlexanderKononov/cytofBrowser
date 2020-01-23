@@ -26,7 +26,7 @@ cytofCoreGUI <-function(){
                tabPanel("Data preparation",
                         sidebarLayout(
                           sidebarPanel(
-                            shinyFilesButton('fcs_files', label='File fcs select', title='Please select fcs file', multiple=TRUE),
+                            shinyFilesButton('fcs_files', label='Select fcs files', title='Please select fcs files', multiple=TRUE),
                             checkboxGroupInput("transformation_list", label = h4("Transformations"),
                                                choices = list("asinh" = "asinh", "outlier by quartile" = "outlier_by_quantile"),
                                                selected = c("asinh", "outlier_by_quantile")),
@@ -45,7 +45,7 @@ cytofCoreGUI <-function(){
                             fluidRow(
                               column(4,
                                      numericInput("n_cell_plot_data_preparation",
-                                                  label = h4("Cell fraction to print"), value = 0.5, step = 0.1)
+                                                  label = h4("Cell fraction to display"), value = 0.5, step = 0.1)
                                      ),
                               column(4,
                                      selectInput("method_plot_data_preparation", label = h4("Visualisation method"),
@@ -78,7 +78,7 @@ cytofCoreGUI <-function(){
                             ),
                             fluidRow(
                               column(6,
-                                     h4("Analyzed markers"),
+                                     h4("Analysed markers"),
                                      verbatimTextOutput('mk_rested_data_preparation')
                                      ),
                               column(6,
@@ -90,7 +90,7 @@ cytofCoreGUI <-function(){
                         )
                ),
                ################################################################### Tab 2
-               tabPanel("Clusterisation",
+               tabPanel("Clustering",
                         sidebarLayout(
                           sidebarPanel(
                             radioButtons("mode_k_choice", label = h4("Choose of number of clusters"),
@@ -106,16 +106,13 @@ cytofCoreGUI <-function(){
                               numericInput("k", label = h4("Choose number of clusters"), value = 8)
                             ),
                             uiOutput("mk_subset_clusterisation_ui"),
-                            #selectInput("exclude_mk_clusterisation", label = "exclude markers from clusterisation",
-                            #            choices = names(fcs_data$use_markers),
-                            #            multiple = TRUE),
-                            actionButton("start_clusterization", label = "Clusterization")
+                            actionButton("start_clusterization", label = "Clustering")
                           ),
                           mainPanel(
                             fluidRow(
                               column(3,
                                      numericInput("n_cell_plot_clasterisation",
-                                                  label = h4("Cell fraction to print"), value = 0.5, step = 0.1)
+                                                  label = h4("Cell fraction to display"), value = 0.5, step = 0.1)
                               ),
                               column(3,
                                      selectInput("method_plot_clasterisation", label = h4("Visualisation method"),
@@ -158,7 +155,7 @@ cytofCoreGUI <-function(){
                tabPanel("Marker level",
                         fluidRow(
                           column(3,
-                                 selectInput("method_summarize_expression", label = h4("summariz method"),
+                                 selectInput("method_summarize_expression", label = h4("summarise method"),
                                              choices = list('median' = "median", 'mean' = "mean"),
                                              selected = 'median')
                           ),

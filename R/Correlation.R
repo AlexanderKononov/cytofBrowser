@@ -205,7 +205,7 @@ get_signals_in_cluster <- function(signals){
 #' @return
 #'
 #' @examples
-take_top_correlation <- function(cor_tdata){
+take_top_correlation <- function(cor_tdata, adj_pValue = 0.01){
   a <- cor_tdata
   a <- a[!is.na(a$cor_coefficient),]
   a <- a[a$adj_pValue <= 0.01,]

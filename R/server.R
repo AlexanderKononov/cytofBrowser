@@ -91,7 +91,7 @@ cytofCore_server <- function(input, output){
   ##### Create UI to choose target marker
   output$mk_target_data_preparation_ui <- renderUI({
     if(is.null(fcs_data$use_markers)){ return(NULL)}
-    selectInput("mk_data_preparation", label = h3("Ploted marker"),
+    selectInput("mk_data_preparation", label = h4("Plotted marker"),
                 choices = names(fcs_data$use_markers),
                 #choices = c(1,2,3),
                 selected = 1)
@@ -102,7 +102,7 @@ cytofCore_server <- function(input, output){
     color_mk <- names(fcs_data$use_markers)[1]
     if(is.null(fcs_data$use_markers)){ return(NULL)}
     fluidRow(
-      selectInput("exclude_mk_data_preparation", label = "exclude markers",
+      selectInput("exclude_mk_data_preparation", label = "Exclude markers",
                   choices = names(fcs_data$use_markers),
                   multiple = TRUE),
       actionButton("exclud_mk_button", label = "Exclude markers")
@@ -246,7 +246,7 @@ cytofCore_server <- function(input, output){
   ##### Create UI to choose excluded markers from clusterisation
   output$mk_subset_clusterisation_ui <- renderUI({
     if(is.null(fcs_data$use_markers)){return(NULL)}
-    selectInput("exclude_mk_clusterisation", label = "exclude markers from clusterisation",
+    selectInput("exclude_mk_clusterisation", label = "Exclude markers from clustering",
                 choices = names(fcs_data$use_markers),
                 multiple = TRUE)
   })
@@ -254,7 +254,7 @@ cytofCore_server <- function(input, output){
   ##### Create UI to choose clusters or marker to colour the UMAP plot
   output$mk_target_clusterisation_ui <- renderUI({
     if(is.null(fcs_data$use_markers)){return(NULL)}
-    selectInput("mk_target_clusterisation", label = h3("Ploted marker"),
+    selectInput("mk_target_clusterisation", label = h4("Plotted marker"),
                 choices = c("cluster", names(fcs_data$use_markers)),
                 selected = 1)
   })
@@ -407,7 +407,7 @@ cytofCore_server <- function(input, output){
   ##### Create UI to choose marker to deconvolution
   output$mk_deconvol_gene_expression_ui <- renderUI({
     if(is.null(fcs_data$use_markers)){return(NULL)}
-    selectInput("mk_deconvol_gene_expression", label = h3("Marker for deconvolution"),
+    selectInput("mk_deconvol_gene_expression", label = h4("Marker for deconvolution"),
                 choices = names(fcs_data$use_markers),
                 selected = 1)
   })
@@ -465,14 +465,14 @@ cytofCore_server <- function(input, output){
     output$corr_analysis_settings_ui <- renderUI({
       fluidRow(
         column(5, wellPanel(
-          selectInput("method", "Select corr method:", c("spearman" = "spearman", "pearson" = "pearson")),
+          selectInput("method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
           numericInput("corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_threshold", "Corr coefficient threshold:", min = -100, max = 100, value = 0.1, step = 0.1)
+          numericInput("corr_threshold", "Correlation coefficient threshold:", min = -100, max = 100, value = 0.1, step = 0.1)
         )),
         column(5, wellPanel(
-          numericInput("corr_bg_anova_alpha", "background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_bg_ctCor_alpha", "Background corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_gene_ctCor_alpha", "Gene corr filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+          numericInput("corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+          numericInput("corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+          numericInput("corr_gene_ctCor_alpha", "Gene correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
         )),
         column(2, wellPanel(
           actionButton('neo4j_activaation', "Neo4j"),
