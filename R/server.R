@@ -19,7 +19,7 @@
 #'
 #' @return
 #'
-#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr neo4R
+#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr neo4r
 #' @examples
 cytofCore_server <- function(input, output){
 
@@ -472,7 +472,7 @@ cytofCore_server <- function(input, output){
         column(5, wellPanel(
           numericInput("corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
           numericInput("corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_gene_ctCor_alpha", "Gene correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+          numericInput("corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
         )),
         column(2, wellPanel(
           actionButton('neo4j_activaation', "Neo4j"),
@@ -481,6 +481,7 @@ cytofCore_server <- function(input, output){
       )
     })
   })
+
   observeEvent(input$simple_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
     corr_settings$method <- "spearman"
@@ -532,7 +533,7 @@ cytofCore_server <- function(input, output){
     correlation$signals_in_cluster <- get_signals_in_cluster(correlation$signals)
   })
 
-  ##### Drawing the reactive and interactive graph with clusters
+  ##### Drawing the reactive and interactive graph network2 with clusters
   output$network2 <- renderVisNetwork({
     if(is.null(clusterisation$nodes)){return(NULL)}
     edges_threshold <- input$edges_threshold_abund_corr
@@ -551,10 +552,12 @@ cytofCore_server <- function(input, output){
                  forceAtlas2Based = list(gravitationalConstant = gravity))
   })
 
+  #### Choice a focused node from the network2
   focus_corr <- reactive({
     list(input$current_node_id2, input$current_edges_id2)
   })
 
+  #### Create the table of correlation signal  by a focused node from the network2
   output$gene_cor_table <- DT::renderDataTable(DT::datatable({
     if(is.null(correlation$signals_between_clusters)){return(NULL)}
     if(is.null(correlation$signals_in_cluster)){return(NULL)}
@@ -576,6 +579,143 @@ cytofCore_server <- function(input, output){
     }
     return(focus_corr_data)
   }))
+
+  ########################
+  ## Marker correlation ##
+  ########################
+
+  mk_corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
+                                  bg_anova_alpha = 0.01, bg_ctCor_alpha = 0.01, gene_ctCor_alpha = 0.01)
+
+  observeEvent(input$advanced_mk_corr_settings, {
+    output$mk_corr_analysis_settings_ui <- renderUI({
+      fluidRow(
+        column(5, wellPanel(
+          selectInput("mk_corr_method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
+          numericInput("mk_corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.1, step = 0.001),
+          numericInput("mk_corr_threshold", "Correlation coefficient threshold:", min = 0, max = 100, value = 0, step = 0.1)
+        )),
+        column(5, wellPanel(
+          numericInput("mk_corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+          numericInput("mk_corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+          numericInput("mk_corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+        )),
+        column(2, wellPanel(
+          actionButton('neo4j_activaation', "Neo4j"),
+          uiOutput('neo4j_ui')
+        ))
+      )
+    })
+  })
+
+  observeEvent(input$simple_mk_corr_settings,{
+    output$corr_analysis_settings_ui <- NULL
+    mk_corr_settings$method <- "spearman"
+    mk_corr_settings$pValue <- 0.1
+    mk_corr_settings$threshold <- 0
+    mk_corr_settings$bg_anova_alpha <- 0.01
+    mk_corr_settings$bg_ctCor_alpha <- 0.01
+    mk_corr_settings$gene_ctCor_alpha <- 0.01
+  })
+
+  observeEvent(input$advanced_mk_corr_settings, {
+    if(!is.null(input$mk_corr_method)){mk_corr_settings$method <- input$mk_corr_method}
+    if(!is.null(input$mk_corr_pValue)){mk_corr_settings$pValue <- input$mk_corr_pValue}
+    if(!is.null(input$mk_corr_threshold)){mk_corr_settings$threshold <- input$mk_corr_threshold}
+    if(!is.null(input$mk_corr_bg_anova_alpha)){mk_corr_settings$bg_anova_alpha <- input$mk_corr_bg_anova_alpha}
+    if(!is.null(input$mk_corr_bg_ctCor_alpha)){mk_corr_settings$bg_ctCor_alpha <- input$mk_corr_bg_ctCor_alpha}
+    if(!is.null(input$mk_corr_gene_ctCor_alpha)){mk_corr_settings$gene_ctCor_alpha <- input$mk_corr_gene_ctCor_alpha}
+  })
+
+  observeEvent(input$mk_corr_analysis, {
+    options(warn=-1)
+    correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
+    correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
+    ##### Background contrast computing
+    if(length(fcs_data$fcs_raw) < 4){
+      correlation$bg_corr_mk <- get_bg_naive_corr_land_mk(list_expData = correlation$list_expData,
+                                                                use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
+      correlation$contrast_corr_land_mk <- get_contrast_naive_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                                                           list_expData = correlation$list_expData,
+                                                                           use_markers = fcs_data$use_markers,
+                                                                           method = mk_corr_settings$method)
+    }
+    if(length(fcs_data$fcs_raw) >= 4){
+      correlation$bg_corr_mk <- get_bg_corr_land_mk(list_expData = correlation$list_expData,
+                                                    use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
+      correlation$contrast_corr_land_mk <- get_contrast_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                                                     list_expData = correlation$list_expData,
+                                                                     use_markers = fcs_data$use_markers,
+                                                                     method = mk_corr_settings$method)
+    }
+    correlation$anova_mk <- get_anova_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                         list_expData = correlation$list_expData, use_markers = fcs_data$use_markers)
+    ##### Analys for each signalling call type
+    correlation$mk_to_mk_corr <- htest_data_extractor_mk(list_tt_expData = correlation$list_tt_expData,
+                                                         use_markers = fcs_data$use_markers,
+                                                         method = mk_corr_settings$method)
+    sig_summary <- comparator_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, anova_mk = correlation$anova_mk,
+                                 bg_corr_mk = correlation$bg_corr_mk, contrast_corr_land_mk = correlation$contrast_corr_land_mk,
+                                 anova_mk_alpha = mk_corr_settings$bg_anova_alpha,
+                                 bg_corr_mk_alpha = mk_corr_settings$bg_ctCor_alpha,
+                                 contrast_corr_land_mk_alpha = mk_corr_settings$bg_ctCor_alpha)
+    correlation$signals_mk <- filter_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, sig_summary = sig_summary,
+                                        threshold = mk_corr_settings$threshold, pValue = mk_corr_settings$pValue)
+    ##### Dividing signals on signals between and in clusters
+    correlation$signal_in_cluster_mk <- get_signal_in_cluster_mk(correlation$signals_mk)
+    correlation$signal_in_cluster_mk$marker_1 <- names(fcs_data$use_markers[
+      match(correlation$signal_in_cluster_mk$marker_1, fcs_data$use_markers)])
+    correlation$signal_in_cluster_mk$marker_2 <- names(fcs_data$use_markers[
+      match(correlation$signal_in_cluster_mk$marker_2, fcs_data$use_markers)])
+
+    correlation$signal_between_cluster_mk <- get_signal_between_cluster_mk(correlation$signals_mk)
+    correlation$signal_between_cluster_mk$signaling_marker <- names(fcs_data$use_markers[
+      match(correlation$signal_between_cluster_mk$signaling_marker, fcs_data$use_markers)])
+    correlation$signal_between_cluster_mk$target_marker <- names(fcs_data$use_markers[
+      match(correlation$signal_between_cluster_mk$target_marker, fcs_data$use_markers)])
+  })
+
+  ##### Drawing the reactive and interactive graph network_mk with clusters for navigation in marker correlation
+  output$network_mk <- renderVisNetwork({
+    if(is.null(clusterisation$nodes)){return(NULL)}
+    edges_threshold <- input$edges_threshold_mk_corr
+    if(is.null(input$edges_threshold_mk_corr)){edges_threshold <- 0.5}
+    gravity <- input$gravity_mk_corr
+    if(is.null(input$gravity_mk_corr)){gravity <- -40}
+    edges <- filter_edges(clusterisation$edges, edges_threshold)
+
+    visNetwork(clusterisation$nodes, edges) %>%
+      visInteraction(hover = T) %>%
+      visEvents(select = "function(data) {
+                            Shiny.onInputChange('current_node_mk_id2', data.nodes)
+                            Shiny.onInputChange('current_edges_mk_id2', data.edges);
+                          ;}") %>%
+      visPhysics(solver = "forceAtlas2Based",
+                 forceAtlas2Based = list(gravitationalConstant = gravity))
+  })
+
+  #### Choice a focused node from the network_mk
+  focus_mk_corr <- reactive({
+    return(list(input$current_node_mk_id2, input$current_edges_mk_id2))
+  })
+
+  #### Create the table of correlation signal by a focused node from the network_mk
+  output$marker_mk_corr_table <- DT::renderDataTable(DT::datatable({
+    if(is.null(correlation$signal_in_cluster_mk) & is.null(correlation$signal_between_cluster_mk)){return(NULL)}
+    focus_mk_corr_data <- NULL
+    if(is.null(focus_mk_corr()[[1]]) & length(focus_mk_corr()[[2]]==1)){
+      target_clusters <- clusterisation$edges[clusterisation$edges$id == focus_mk_corr()[[2]], c("from", "to")]
+      focus_mk_corr_data <- correlation$signal_between_cluster_mk[(
+        correlation$signal_between_cluster_mk$signaling_cluster %in% target_clusters) &
+          (correlation$signal_between_cluster_mk$target_cluster %in% target_clusters),]
+
+    }
+    if(length(focus_mk_corr()[[1]])==1){
+      focus_mk_corr_data <- correlation$signal_in_cluster_mk[correlation$signal_in_cluster_mk$cluster == focus_mk_corr()[[1]],]
+    }
+    return(focus_mk_corr_data)
+  }))
+
 
   ########################
   ####      GDB       ####

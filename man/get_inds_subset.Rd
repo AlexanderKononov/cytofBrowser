@@ -4,7 +4,7 @@
 \alias{get_inds_subset}
 \title{Get indexs of rows with were sampled to subset}
 \usage{
-get_inds_subset(fcs_raw, plot_ncell = 1000)
+get_inds_subset(fcs_raw, sampling_size = 0.5)
 }
 \arguments{
 \item{plot_ncell}{}

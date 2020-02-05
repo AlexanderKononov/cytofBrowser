@@ -4,7 +4,12 @@
 \alias{get_deconvol_dataframe}
 \title{Get dataframe for deconvolution plot of markers to samples-clusters projection}
 \usage{
-get_deconvol_dataframe(fcs_raw, use_markers, cell_clustering)
+get_deconvol_dataframe(
+  fcs_raw,
+  use_markers,
+  cell_clustering,
+  summarize_mode = "median"
+)
 }
 \arguments{
 \item{cell_clustering}{}

@@ -4,7 +4,7 @@
 \alias{take_top_correlation}
 \title{Low-level function for extraction of top significant corrlation signals}
 \usage{
-take_top_correlation(cor_tdata)
+take_top_correlation(cor_tdata, adj_pValue = 0.01)
 }
 \arguments{
 \item{cor_tdata}{}

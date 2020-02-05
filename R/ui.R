@@ -205,6 +205,40 @@ cytofCoreGUI <-function(){
                         fluidRow(
                           DT::dataTableOutput("gene_cor_table")
                         )
+               ),
+               ################################################################### Tab 5
+               tabPanel("Marker correlation",
+                        fluidRow(
+                          column(6,
+                                 sliderInput('edges_threshold_mk_corr', "Edge weight threshold for graph",
+                                             min =0, max = 1, value = 0.5, step = 0.01),
+                                 sliderInput('gravity_mk_corr', "Gravity for graph",
+                                             min = -100, max = 0, value = -40, step = 1),
+                                 visNetworkOutput("network_mk_corr")
+                                 ),
+                          column(6,
+                                 visNetworkOutput('network_mk')
+                                 )
+                        ),
+                        fluidRow(
+                          column(3,
+                                 h4("Correlation settings:")
+                          ),
+                          column(3,
+                                 actionButton("simple_mk_corr_settings", "Simple"),
+                                 actionButton("advanced_mk_corr_settings", "Advanced")
+                          ),
+                          column(3,
+                                 actionButton('mk_corr_analysis', label = "Start correlation analysis")
+                          )
+                        ),
+                        fluidRow(
+                          uiOutput('mk_corr_analysis_settings_ui')
+                        ),
+                        fluidRow(
+                          DT::dataTableOutput('marker_mk_corr_table')
+                        )
+
                )
 
     )

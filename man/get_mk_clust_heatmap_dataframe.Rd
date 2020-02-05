@@ -4,7 +4,12 @@
 \alias{get_mk_clust_heatmap_dataframe}
 \title{Get dataframe for marker-cluster heatmap}
 \usage{
-get_mk_clust_heatmap_dataframe(fcs_raw, use_markers, cell_clustering)
+get_mk_clust_heatmap_dataframe(
+  fcs_raw,
+  use_markers,
+  cell_clustering,
+  summarize_mode = "median"
+)
 }
 \arguments{
 \item{cell_clustering}{}

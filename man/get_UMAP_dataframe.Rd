@@ -10,7 +10,10 @@ get_UMAP_dataframe(
   clust_markers,
   tsne_inds,
   cell_clustering,
-  method = "UMAP"
+  method = "UMAP",
+  perplexity = 30,
+  theta = 0.5,
+  max_iter = 1000
 )
 }
 \arguments{

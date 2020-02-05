@@ -1,7 +1,7 @@
 #library(flowCore)
 
 ### Create test data
-#test_fcs_raw <- fsApply(fcs_raw, function(x) x[1:100,])
+#test_fcs_raw <- fsApply(fcs_raw, function(x) x[1:300,])
 #test_cell_clustering_list <- lapply(cell_clustering_list, function(x) x[1:100])
 #table(test_cell_clustering_list[[1]])
 
@@ -18,6 +18,7 @@
 #'
 #' @examples
 get_list_cell_ctDist <- function(cell_clustering_list){
+  cell_clustering_list <- as.list(cell_clustering_list)
   list_coldata_sce <- lapply(1:length(cell_clustering_list), function(x) data.frame(call = 1:length(cell_clustering_list[[x]]), cluster = cell_clustering_list[[x]]))
   list_cell_ctDist <- ct_sample_aggregator(list_coldata_sce, cell_type_column = "cluster")
   return(list_cell_ctDist)
@@ -25,8 +26,8 @@ get_list_cell_ctDist <- function(cell_clustering_list){
 
 ###test for get_list_cell_ctDist
 #test_list_cell_ctDist <- get_list_cell_ctDist(test_cell_clustering_list)
-#table(test_cell_clustering_list[[4]])
-#colSums(test_list_cell_ctDist[[4]])
+#table(test_cell_clustering_list[[1]])
+#colSums(test_list_cell_ctDist[[1]])
 
 ### Functions to draw abundance correlation triangle plot
 #########################################################

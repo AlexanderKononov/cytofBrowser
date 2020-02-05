@@ -24,6 +24,10 @@ get_fcs_metadata <- function(fcs_files){
   return(md)
 }
 
+### test
+#md <- get_fcs_metadata(c("./test_data/c13_20190704_hnp_perf_11_0_Alex2.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alex2.fcs",
+#                        "./test_data/c13_20190704_hnp_perf_11_0_Alez1.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alez1.fcs"))
+
 ##### creat FlowSet object
 #' Creat FlowSet object
 #' @description The function takes dataframe with column contained  paths to
@@ -46,6 +50,9 @@ get_fcs_raw <- function(md){
   sampleNames(fcs_raw) <- gsub(".fcs", "", sampleNames(fcs_raw))
   return(fcs_raw)
 }
+
+### test
+#fcs_raw <- get_fcs_raw(md)
 
 ##### Create panel data
 #' Create panel data to fowSet object
@@ -73,6 +80,9 @@ get_fcs_panel <- function(fcs_raw){
   return(panel)
 }
 
+### test
+#panel <- get_fcs_panel(fcs_raw)
+
 ##### Create use_marker
 #' filtering out technical markers
 #' @description the function formed list of markers which have class
@@ -92,6 +102,9 @@ get_use_marker <- function(panel){
   names(use_markers) <- gsub("_(v)", "", names(use_markers), fixed = T)          ### It should be fixed (problem with "_(v)")
   return(use_markers)
 }
+
+### test
+#use_markers <- get_use_marker(panel)
 
 ##### Upload data from fcs files
 upload_fcs_data <- function(fcs_files){
@@ -122,6 +135,9 @@ asinh_transformation <- function(fcs_raw, cofactor){
   return(fcs_asinh)
 }
 
+### test
+#fcs_raw <- asinh_transformation(fcs_raw, 5)
+
 ##### Transformation to a from 0 to 1 variable and removing outliers
 #' Transformation to a from 0 to 1 variable and removing outliers
 #'
@@ -145,6 +161,9 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
   })
   return(fcs_outlier_by_quantile)
 }
+
+### test
+#fcs_raw <- outlier_by_quantile_transformation(fcs_raw, 0.01)
 
 ##### Extract cell number
 #' Extract cell number

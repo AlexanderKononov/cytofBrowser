@@ -24,6 +24,9 @@ get_som <- function(fcs_raw, use_markers){
 
 }
 
+### test
+#som <- get_som(fcs_raw, use_markers)
+
 ##### Get mc consensusCluster object from ConsensusClusterPlus
 #' Get mc consensusCluster object from ConsensusClusterPlus
 #'
@@ -41,6 +44,9 @@ get_consensusClust <- function(som, maxK = 20){
                              distance = "euclidean", seed = 1234)
   return(mc)
 }
+
+### test
+#mc <- get_consensusClust(som)
 
 ##### Get a optimal number of clusters
 #' Get a optimal number of clusters
@@ -81,10 +87,13 @@ get_cluster_annotation <- function(fcs_raw, som, mc, k){
   cell_clustering <- code_clustering[som$map$mapping[,1]]
   l <- fsApply(fcs_raw, nrow)
   l <- c(0, sapply(1:length(l), function(x) sum(l[1:x])))
-  cell_clustering_list <- sapply(2:length(l), function(x) cell_clustering[(l[x-1]+1):l[x]])
+  cell_clustering_list <- lapply(2:length(l), function(x) cell_clustering[(l[x-1]+1):l[x]])
   names(cell_clustering_list) <- sampleNames(fcs_raw)
   return(cell_clustering_list)
 }
+
+### test
+#cell_clustering_list <- get_cluster_annotation(fcs_raw, som, mc, 6)
 
 ##### Create the cluster annotation as one vector
 #' Create the cluster annotation as one vector
@@ -102,6 +111,9 @@ get_cell_clustering_list <- function(som, mc, k){
   cell_clustering <- code_clustering[som$map$mapping[,1]]
   return(cell_clustering)
 }
+
+###test
+#cell_clustering <- get_cell_clustering_list(som, mc, 6)
 
 ##### Get euclidean distance between clones
 #' Get euclidean distance between clones

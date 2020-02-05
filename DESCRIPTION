@@ -28,7 +28,8 @@ Imports:
     shiny,
     shinyFiles,
     umap,
-    visNetwork
+    visNetwork,
+    neo4r
 URL: https://github.com/AlexanderKononov/cytofCore
 BugReports: https://github.com/AlexanderKononov/cytofCore/issues
 Suggests: 
