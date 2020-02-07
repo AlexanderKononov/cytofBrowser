@@ -41,13 +41,14 @@ neo_api_ping <- function(gdb){
 #' @param gdb
 #'
 #' @return
+#' @importFrom flowCore sampleNames
 #' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_sample_GDB <- function(fcs_raw, gdb){
   neo4r::call_neo4j('CREATE CONSTRAINT ON (b:Sample) ASSERT b.name IS UNIQUE;', gdb)
   for(i in 1:length(fcs_raw)){
-    neo4r::call_neo4j(paste0('CREATE (:Sample { name: \'', sampleNames(fcs_raw)[i],
+    neo4r::call_neo4j(paste0('CREATE (:Sample { name: \'', flowCore::sampleNames(fcs_raw)[i],
                       '\', cell_number: ', nrow(fcs_raw[[i]]), '})'), gdb)
   }
 }

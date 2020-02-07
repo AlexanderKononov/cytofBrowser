@@ -34,13 +34,13 @@ get_fcs_metadata <- function(fcs_files){
 #' }
 #'
 #' @return flowSet object from flowCore package
-#' @importFrom flowCore read.flowSet
+#' @importFrom flowCore read.flowSet sampleNames
 #'
 #' @examples
 get_fcs_raw <- function(md){
   pathes <- as.vector(md$path)
   fcs_raw <- flowCore::read.flowSet(pathes, transformation = FALSE, truncate_max_range = FALSE)
-  sampleNames(fcs_raw) <- gsub(".fcs", "", sampleNames(fcs_raw))
+  sampleNames(fcs_raw) <- gsub(".fcs", "", flowCore::sampleNames(fcs_raw))
   return(fcs_raw)
 }
 
@@ -57,13 +57,14 @@ get_fcs_raw <- function(md){
 #'
 #' @return data frame with information about the markers
 #' @export
+#' @importFrom flowCore pData parameters
 #' @importClassesFrom flowCore flowSet
 #'
 #' @examples
 get_fcs_panel <- function(fcs_raw){
   tech_patterns <-list(computational_tech = c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE", "BCKG"),
                        marker_tech = c("_BC", "BCKG", "DNA", "Cisplatin"))
-  panel <- as.data.frame(pData(parameters(fcs_raw[[1]]))[,c("name", "desc")])
+  panel <- as.data.frame(flowCore::pData(flowCore::parameters(fcs_raw[[1]]))[,c("name", "desc")])
   rownames(panel) <- NULL
   panel <- panel[sapply(panel$name, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
   panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) x[length(x)])
@@ -166,11 +167,11 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
 #' @param fcs_raw
 #'
 #' @return
-#' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore sampleNames fsApply
 #'
 #' @examples
 get_cell_number <- function(fcs_raw){
-  cell_number <- data.frame(smpl = sampleNames(fcs_raw),cell_number = fsApply(fcs_raw, nrow))
+  cell_number <- data.frame(smpl = flowCore::sampleNames(fcs_raw),cell_number = flowCore::fsApply(fcs_raw, nrow))
   return(cell_number)
 }
 
@@ -187,7 +188,7 @@ get_cell_number <- function(fcs_raw){
 #' @param sampling_size
 #'
 #' @return
-#' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore fsApply sampleNames exprs
 #' @importFrom Rtsne Rtsne
 #' @importFrom umap umap
 #'
@@ -195,8 +196,8 @@ get_cell_number <- function(fcs_raw){
 sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE",
                          perplexity = 30, theta = 0.5, max_iter = 1000){
   #sampling_size <- as.integer(sampling_size/length(fcs_raw))
-  expr <- flowCore::fsApply(fcs_raw[,use_markers], exprs)
-  sample_ids <- rep(sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
+  expr <- flowCore::fsApply(fcs_raw[,use_markers], flowCore::exprs)
+  sample_ids <- rep(flowCore::sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
 
   ## Find and skip duplicates
   dups <- which(!duplicated(expr[, use_markers]))
