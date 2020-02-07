@@ -19,7 +19,8 @@
 #' @examples
 get_list_cell_ctDist <- function(cell_clustering_list){
   cell_clustering_list <- as.list(cell_clustering_list)
-  list_coldata_sce <- lapply(1:length(cell_clustering_list), function(x) data.frame(call = 1:length(cell_clustering_list[[x]]), cluster = cell_clustering_list[[x]]))
+  list_coldata_sce <- lapply(1:length(cell_clustering_list), function(x)
+    data.frame(call = 1:length(cell_clustering_list[[x]]), cluster = cell_clustering_list[[x]]))
   list_cell_ctDist <- ct_sample_aggregator(list_coldata_sce, cell_type_column = "cluster")
   return(list_cell_ctDist)
 }
@@ -58,18 +59,19 @@ get_abundance <- function(list_cell_ctDist){
 #' @param method
 #'
 #' @return
+#' @importFrom stats cor.test p.adjust
 #'
 #' @examples
 get_abundance_correlation <- function(abundence_data, method = "spearman"){
   abundance_correlation <- do.call(rbind, lapply(colnames(abundence_data), function(i){
     do.call(rbind, lapply(colnames(abundence_data), function(j){
-      res <- cor.test(abundence_data[,i], abundence_data[,j], method = method)
+      res <- stats::cor.test(abundence_data[,i], abundence_data[,j], method = method)
       data.frame(cluster_1 = i, cluster_2 = j, cor_significance = res$p.value, cor_coefficient = res$estimate)
     }))
   }))
   abundance_correlation <- abundance_correlation[abundance_correlation$cluster_1!=abundance_correlation$cluster_2,]
   rownames(abundance_correlation) <- NULL
-  abundance_correlation$adj_pValue <- p.adjust(abundance_correlation$cor_significance, method = "BH")
+  abundance_correlation$adj_pValue <- stats::p.adjust(abundance_correlation$cor_significance, method = "BH")
   return(abundance_correlation)
 }
 
@@ -83,11 +85,11 @@ get_abundance_correlation <- function(abundence_data, method = "spearman"){
 #' @param abundance_correlation
 #'
 #' @return
-#' @import reshape2
+#' @importFrom reshape2 dcast
 #'
 #' @examples
 get_corr_coef_matrix <- function(abundance_correlation){
-  corr_coef_matrix <- dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "cor_coefficient")
+  corr_coef_matrix <- reshape2::dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "cor_coefficient")
   rownames(corr_coef_matrix) <- corr_coef_matrix[,1]
   corr_coef_matrix[,1] <-NULL
   corr_coef_matrix <- as.matrix(corr_coef_matrix)
@@ -101,11 +103,11 @@ get_corr_coef_matrix <- function(abundance_correlation){
 #' @param abundance_correlation
 #'
 #' @return
-#' @import reshape2
+#' @importFrom reshape2 dcast
 #'
 #' @examples
 get_corr_pValue_matrix <- function(abundance_correlation){
-  corr_pValue_matrix <- dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "cor_significance")
+  corr_pValue_matrix <- reshape2::dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "cor_significance")
   rownames(corr_pValue_matrix) <- corr_pValue_matrix[,1]
   corr_pValue_matrix[,1] <-NULL
   corr_pValue_matrix <- as.matrix(corr_pValue_matrix)
@@ -119,11 +121,11 @@ get_corr_pValue_matrix <- function(abundance_correlation){
 #' @param abundance_correlation
 #'
 #' @return
-#' @import reshape2
+#' @importFrom reshape2 dcast
 #'
 #' @examples
 get_adj_corr_pValue_matrix <- function(abundance_correlation){
-  adj_corr_pValue_matrix <- dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "adj_pValue")
+  adj_corr_pValue_matrix <- reshape2::dcast(abundance_correlation, cluster_1 ~ cluster_2, value.var = "adj_pValue")
   rownames(adj_corr_pValue_matrix) <- adj_corr_pValue_matrix[,1]
   adj_corr_pValue_matrix[,1] <-NULL
   adj_corr_pValue_matrix <- as.matrix(adj_corr_pValue_matrix)
@@ -140,11 +142,11 @@ get_adj_corr_pValue_matrix <- function(abundance_correlation){
 #' @param fcs_raw
 #'
 #' @return
-#' @import flowCore
+#' @importFrom flowCore fsApply
 #'
 #' @examples
 get_list_expData <- function(fcs_raw){
-  list_expData <- lapply(fsApply(fcs_raw, function(x) as.data.frame(exprs(x))),t)
+  list_expData <- lapply(flowCore::fsApply(fcs_raw, function(x) as.data.frame(flowCore::exprs(x))),t)
   return(list_expData)
 }
 
@@ -157,6 +159,7 @@ get_list_expData <- function(fcs_raw){
 #' @param signals
 #'
 #' @return
+#' @importFrom stats p.adjust
 #'
 #' @examples
 get_signals_between_clusters <- function(signals){
@@ -169,7 +172,7 @@ get_signals_between_clusters <- function(signals){
     }))
   }))
   rownames(signals_between_clusters) <- NULL
-  signals_between_clusters$adj_pValue <- p.adjust(signals_between_clusters$cor_significance, method = "BH")
+  signals_between_clusters$adj_pValue <- stats::p.adjust(signals_between_clusters$cor_significance, method = "BH")
   return(signals_between_clusters)
 }
 
@@ -182,6 +185,7 @@ get_signals_between_clusters <- function(signals){
 #' @param signals
 #'
 #' @return
+#' @importFrom stats p.adjust
 #'
 #' @examples
 get_signals_in_cluster <- function(signals){
@@ -191,7 +195,7 @@ get_signals_in_cluster <- function(signals){
                signals[[i]][[i]][,c("cor_significance", "cor_coefficient")])
   }))
   rownames(signals_in_cluster) <- NULL
-  signals_in_cluster$adj_pValue <- p.adjust(signals_in_cluster$cor_significance, method = "BH")
+  signals_in_cluster$adj_pValue <- stats::p.adjust(signals_in_cluster$cor_significance, method = "BH")
   return(signals_in_cluster)
 }
 
@@ -221,7 +225,7 @@ take_top_correlation <- function(cor_tdata, adj_pValue = 0.01){
 #' @param use_markers
 #'
 #' @return
-#' @import dplyr
+#' @importFrom magrittr "%>%"
 #'
 #' @examples
 get_signals_between_clusters_top <- function(signals_between_clusters, use_markers){
@@ -242,7 +246,7 @@ get_signals_between_clusters_top <- function(signals_between_clusters, use_marke
 #' @param use_markers
 #'
 #' @return
-#' @import dplyr
+#' @importFrom magrittr "%>%"
 #'
 #' @examples
 get_signals_in_cluster_top <- function(signals_in_cluster_top, use_markers){
@@ -313,8 +317,10 @@ cluster_unification <- function(list_cell_ctDist){
 #' @return
 #'
 #' @examples
-ct_sample_aggregator <- function(list_coldata_sce, cell_id_column = "rownames", cell_type_column = "cluster", do_cluster_unification = TRUE){
-  list_cell_ctDist <- lapply(list_coldata_sce, function(x) cell_type_organiser(x, cell_id_column = cell_id_column, cell_type_column = cell_type_column))
+ct_sample_aggregator <- function(list_coldata_sce, cell_id_column = "rownames",
+                                 cell_type_column = "cluster", do_cluster_unification = TRUE){
+  list_cell_ctDist <- lapply(list_coldata_sce, function(x)
+    cell_type_organiser(x, cell_id_column = cell_id_column, cell_type_column = cell_type_column))
   if(do_cluster_unification){list_cell_ctDist <- cluster_unification(list_cell_ctDist)}
   return(list_cell_ctDist)
 }
@@ -378,6 +384,7 @@ tt_sample_aggregator <- function(list_cell_ctDist, list_expData){
 #' @param method
 #'
 #' @return
+#' @importFrom stats cor.test p.adjust
 #'
 #' @examples
 backgraund_correlation <- function(list_cell_ctDist, list_expData, method = "spearman"){
@@ -393,11 +400,11 @@ backgraund_correlation <- function(list_cell_ctDist, list_expData, method = "spe
     comparison_unit <- cbind(comparison_unit, do.call(cbind, lapply(colnames(list_cell_ctDist[[1]]), function(x)
       rep(abundence_meter(x, list_cell_ctDist), time = sapply(list_expData, ncol)))))
     colnames(comparison_unit) <- c("expression",colnames(list_cell_ctDist[[1]]))
-    htest <- sapply(comparison_unit[,-1], cor.test, y = comparison_unit$expression)
+    htest <- sapply(comparison_unit[,-1], stats::cor.test, y = comparison_unit$expression)
     bg_htest[i,] <- unlist(htest["p.value",])
     bg_coef[i,] <- unlist(htest["estimate",])
   }
-  bg_padj <- apply(bg_htest, 2, function(x) p.adjust(x, method = "BH"))
+  bg_padj <- apply(bg_htest, 2, function(x) stats::p.adjust(x, method = "BH"))
   bg_ctCor_data <- list(bg_htest, bg_coef, bg_padj)
   names(bg_ctCor_data) <- c("bg_htest", "bg_coef", "bg_padj")
   return(bg_ctCor_data)
@@ -414,6 +421,7 @@ backgraund_correlation <- function(list_cell_ctDist, list_expData, method = "spe
 #' @param list_expData
 #'
 #' @return
+#' @importFrom stats aov p.adjust
 #'
 #' @examples
 background_anova <- function(list_cell_ctDist ,list_expData){
@@ -424,14 +432,14 @@ background_anova <- function(list_cell_ctDist ,list_expData){
         data.frame(expression = list_expData[[x]][i,list_cell_ctDist[[x]][,j]], samples = x)}))
       comparison_unit$samples <- as.factor(comparison_unit$samples)
       if(length(levels(comparison_unit$sample))<2){return(NA)}
-      aov_data <- aov(formula = expression ~ samples, data = comparison_unit)
+      aov_data <- stats::aov(formula = expression ~ samples, data = comparison_unit)
       return(summary(aov_data)[[1]][["Pr(>F)"]][1])
     })
     return(tt_anova_bg)
   }))
   colnames(bg_anova) <- colnames(list_cell_ctDist[[1]])
   bg_anova_adj <- apply(bg_anova, 2, function(x){
-    p_adj <- p.adjust(x, method = "BH")
+    p_adj <- stats::p.adjust(x, method = "BH")
     return(p_adj)})
   colnames(bg_anova_adj) <- colnames(list_cell_ctDist[[1]])
   bg_anova_result <- list(bg_anova, bg_anova_adj)
@@ -455,6 +463,7 @@ background_anova <- function(list_cell_ctDist ,list_expData){
 #' @param method
 #'
 #' @return
+#' @importFrom stats cor.test
 #'
 #' @examples
 target_type_cortest <- function(target_type, abund_data, list_tt_expData, method = "spearman"){
@@ -466,7 +475,7 @@ target_type_cortest <- function(target_type, abund_data, list_tt_expData, method
       return(as.data.frame(tmp))})
     comparison_unit <- do.call(rbind, comparison_unit)
     if(nrow(comparison_unit) < 3){return(NA)}
-    return(cor.test(comparison_unit$expression, comparison_unit$abundance, method = method))
+    return(stats::cor.test(comparison_unit$expression, comparison_unit$abundance, method = method))
   })
   names(tt_htest) <- rownames(list_tt_expData[[1]][[1]])
   return(tt_htest)
@@ -537,6 +546,7 @@ target_type_data_extractor <- function(gene_ctDistr, bg_ctCor_data){
 #' @param method
 #'
 #' @return
+#' @importFrom stats p.adjust
 #'
 #' @examples
 htest_data_extractor <- function(abund_data, list_tt_expData, method = "spearman"){
@@ -555,7 +565,7 @@ htest_data_extractor <- function(abund_data, list_tt_expData, method = "spearman
     gene_ctSignif[,i] <- sapply(names(tt_htest), function(x) tt_htest[[x]]$p.value)
     ct_coef[,i] <- sapply(names(tt_htest), function(x) tt_htest[[x]]$estimate)
   }
-  gene_ctSignif_adj <- apply(gene_ctSignif, 2, function(x) p.adjust(x, method = "BH"))
+  gene_ctSignif_adj <- apply(gene_ctSignif, 2, function(x) stats::p.adjust(x, method = "BH"))
   return(list(gene_ctSignif, ct_coef, gene_ctSignif_adj))
 }
 

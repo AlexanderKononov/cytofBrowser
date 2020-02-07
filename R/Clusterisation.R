@@ -13,13 +13,14 @@
 #' @param use_markers
 #'
 #' @return
-#' @import flowCore FlowSOM
+#' @importFrom FlowSOM ReadInput
+#' @importFrom FlowSOM BuildSOM
 #'
 #' @examples
 get_som <- function(fcs_raw, use_markers){
-  fsom <- ReadInput(fcs_raw, transform = FALSE, scale = FALSE)
+  fsom <- FlowSOM::ReadInput(fcs_raw, transform = FALSE, scale = FALSE)
   set.seed(1234)
-  som <- BuildSOM(fsom, colsToUse = use_markers)
+  som <- FlowSOM::BuildSOM(fsom, colsToUse = use_markers)
   return(som)
 
 }
@@ -34,11 +35,11 @@ get_som <- function(fcs_raw, use_markers){
 #' @param maxK
 #'
 #' @return
-#' @import flowCore FlowSOM ConsensusClusterPlus
+#' @importFrom ConsensusClusterPlus ConsensusClusterPlus
 #'
 #' @examples
 get_consensusClust <- function(som, maxK = 20){
-  mc <- ConsensusClusterPlus(t(som$map$codes), maxK = maxK, reps = 100,
+  mc <- ConsensusClusterPlus::ConsensusClusterPlus(t(som$map$codes), maxK = maxK, reps = 100,
                              pItem = 0.9, pFeature = 1, title = "consensus_plots", plot = "png",
                              clusterAlg = "hc", innerLinkage = "average", finalLinkage = "average",
                              distance = "euclidean", seed = 1234)
@@ -79,13 +80,13 @@ get_optimal_clusters <- function(mc, rate_var_expl = 0.9){
 #' @param k
 #'
 #' @return
-#' @import flowCore FlowSOM ConsensusClusterPlus
+#' @importFrom flowCore fsApply
 #'
 #' @examples
 get_cluster_annotation <- function(fcs_raw, som, mc, k){
   code_clustering <- mc[[k]]$consensusClass
   cell_clustering <- code_clustering[som$map$mapping[,1]]
-  l <- fsApply(fcs_raw, nrow)
+  l <- flowCore::fsApply(fcs_raw, nrow)
   l <- c(0, sapply(1:length(l), function(x) sum(l[1:x])))
   cell_clustering_list <- lapply(2:length(l), function(x) cell_clustering[(l[x-1]+1):l[x]])
   names(cell_clustering_list) <- sampleNames(fcs_raw)
@@ -103,7 +104,6 @@ get_cluster_annotation <- function(fcs_raw, som, mc, k){
 #' @param k
 #'
 #' @return
-#' @import flowCore FlowSOM ConsensusClusterPlus
 #'
 #' @examples
 get_cell_clustering_list <- function(som, mc, k){
@@ -123,12 +123,14 @@ get_cell_clustering_list <- function(som, mc, k){
 #' @param cell_clustering
 #'
 #' @return
-#' @import flowCore dplyr
+#' @importFrom magrittr "%>%"
+#' @importFrom flowCore fsApply
+#' @importFrom dplyr group_by summarize_all
 #'
 #' @examples
 get_euclid_dist <- function(fcs_raw, use_markers, cell_clustering){
-  expr_median <- data.frame(fsApply(fcs_raw[,use_markers], exprs), cell_clustering = cell_clustering, check.names = F) %>%
-    group_by(cell_clustering) %>% summarize_all(funs(median))
+  expr_median <- data.frame(flowCore::fsApply(fcs_raw[,use_markers], exprs), cell_clustering = cell_clustering, check.names = F) %>%
+    dplyr::group_by(cell_clustering) %>% dplyr::summarize_all(funs(median))
   rownames(expr_median) <- expr_median$cell_clustering
   expr_median$cell_clustering <- NULL
   cluster_euclidean_distance <- data.frame(t(combn(rownames(expr_median),2)), dist=as.matrix(dist(expr_median))[lower.tri(as.matrix(dist(expr_median)))] )
@@ -180,12 +182,13 @@ filter_edges <- function(edges, threshold){
 #' @param cell_clustering
 #'
 #' @return
-#' @import RColorBrewer
+#' @importFrom RColorBrewer brewer.pal.info brewer.pal
 #'
 #' @examples
 get_nodes <- function(edges, cell_clustering){
-  qual_col_pals <- brewer.pal.info[brewer.pal.info$category == 'qual',]
-  cluster_colour <- sample(unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))), length(unique(cell_clustering)))
+  qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
+  cluster_colour <- sample(unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors,
+                                         rownames(qual_col_pals))), length(unique(cell_clustering)))
   nodes <- data.frame(id = unique(c(edges$to, edges$from)),
                       color = cluster_colour,
                       label = unique(c(edges$to, edges$from)),
@@ -202,11 +205,11 @@ get_nodes <- function(edges, cell_clustering){
 #' @param plot_ncell
 #'
 #' @return
-#' @import flowCore
+#' @importFrom flowCore fsApply
 #'
 #' @examples
 get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
-  sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
+  sample_ids <- rep(sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
   inds <- split(1:length(sample_ids), sample_ids)
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)
   tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
@@ -226,20 +229,22 @@ get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
 #' @param cell_clustering
 #'
 #' @return
-#' @import flowCore umap Rtsne
+#' @importFrom flowCore fsApply exprs
+#' @importFrom umap umap
+#' @importFrom Rtsne Rtsne
 #'
 #' @examples
 get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, cell_clustering, method = "UMAP",
                                perplexity = 30, theta = 0.5, max_iter = 1000){
-  expr <- fsApply(fcs_raw[,use_markers], exprs)
+  expr <- flowCore::fsApply(fcs_raw[,use_markers], flowCore::exprs)
   tsne_expr <- expr[tsne_inds, clust_markers]
   if(method == "UMAP"){
-    umap_out <- umap(tsne_expr)
+    umap_out <- umap::umap(tsne_expr)
     umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$layout, cluster =  as.factor(cell_clustering)[tsne_inds])
   }
   if(method == "tSNE"){
     set.seed(1234)
-    umap_out <- Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE,
+    umap_out <- Rtsne::Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE,
                       perplexity = perplexity, theta = theta, max_iter = max_iter)
     umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$Y, cluster =  as.factor(cell_clustering)[tsne_inds])
   }
@@ -254,11 +259,11 @@ get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, c
 #' @param cell_clustering
 #'
 #' @return
-#' @import flowCore
+#' @importFrom flowCore fsApply
 #'
 #' @examples
 get_abundance_dataframe <- function(fcs_raw, cell_clustering){
-  sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
+  sample_ids <- rep(sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
   abundance_data <- table(cell_clustering, sample_ids)
   abundance_data <- t(t(abundance_data) / colSums(abundance_data)) * 100
   abundance_data <- as.data.frame(abundance_data)
@@ -273,7 +278,6 @@ get_abundance_dataframe <- function(fcs_raw, cell_clustering){
 #' @param cluster_to_merge
 #'
 #' @return
-#' @import dplyr
 #'
 #' @examples
 cluster_merging <- function(clusters, cluster_to_merge){

@@ -1,8 +1,3 @@
-#library(shiny)
-
-#library(visNetwork)
-#library(d3heatmap)
-#library(shinyFiles)
 
 #' The main function to run cutofCore graphic interface
 #' @description Run graphical user interface for cytofanalyzer.

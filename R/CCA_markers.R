@@ -14,6 +14,7 @@
 #' @param method
 #'
 #' @return
+#' @importFrom stats p.adjust
 #'
 #' @examples
 get_bg_naive_corr_land_mk <- function(list_expData, use_markers = NULL, method = "spearman"){
@@ -32,7 +33,7 @@ get_bg_naive_corr_land_mk <- function(list_expData, use_markers = NULL, method =
     bg_htest[i,mk_names != i] <- unlist(htest["p.value",])
     bg_coef[i,mk_names != i] <- unlist(htest["estimate",])
   }
-  bg_padj <- apply(bg_htest, 2, function(x) p.adjust(x, method = "BH"))
+  bg_padj <- apply(bg_htest, 2, function(x) stats::p.adjust(x, method = "BH"))
   bg_naive_corr_mk <- list(bg_htest, bg_coef, bg_padj)
   names(bg_naive_corr_mk) <- c("bg_htest", "bg_coef", "bg_padj")
   return(bg_naive_corr_mk)
@@ -49,7 +50,9 @@ get_bg_naive_corr_land_mk <- function(list_expData, use_markers = NULL, method =
 #' @param method
 #'
 #' @return
-#' @import dplyr
+#' @importFrom magrittr "%>%"
+#' @importFrom dplyr group_by summarise_all
+#' @importFrom stats cor.test p.adjust
 #'
 #' @examples
 get_bg_corr_land_mk <- function(list_expData, use_markers = NULL, method = "spearman"){
@@ -63,14 +66,14 @@ get_bg_corr_land_mk <- function(list_expData, use_markers = NULL, method = "spea
 
   comparison_unit <- as.data.frame(t(do.call(cbind, list_expData)))[,mk_names]
   comparison_unit$samples <- rep(names(list_expData), lapply(list_expData, ncol))
-  comparison_unit <- group_by(comparison_unit, samples) %>% summarise_all(median) %>% as.data.frame()
+  comparison_unit <- dplyr::group_by(comparison_unit, samples) %>% dplyr::summarise_all(median) %>% as.data.frame()
   comparison_unit$samples <-NULL
   for(i in mk_names){
-    htest <- sapply(comparison_unit[,mk_names != i], cor.test, y = comparison_unit[,i], method = method)
+    htest <- sapply(comparison_unit[,mk_names != i], stats::cor.test, y = comparison_unit[,i], method = method)
     bg_htest[i,mk_names != i] <- unlist(htest["p.value",])
     bg_coef[i,mk_names != i] <- unlist(htest["estimate",])
   }
-  bg_padj <- apply(bg_htest, 2, function(x) p.adjust(x, method = "BH"))
+  bg_padj <- apply(bg_htest, 2, function(x) stats::p.adjust(x, method = "BH"))
   bg_corr_mk <- list(bg_htest, bg_coef, bg_padj)
   names(bg_corr_mk) <- c("bg_htest", "bg_coef", "bg_padj")
   return(bg_corr_mk)
@@ -86,6 +89,7 @@ get_bg_corr_land_mk <- function(list_expData, use_markers = NULL, method = "spea
 #' @param use_markers
 #'
 #' @return
+#' @importFrom stats aov p.adjust
 #'
 #' @examples
 get_bg_anova_land_mk <- function(list_expData, use_markers = NULL){
@@ -95,11 +99,11 @@ get_bg_anova_land_mk <- function(list_expData, use_markers = NULL){
   bg_anova <- sapply(mk_names, function(i){
     tmp <- as.data.frame(comparison_unit[,c('samples', i)])
     colnames(tmp) <- c('samples', 'expression')
-    aov_data <- aov(formula = expression ~ samples, data = tmp)
+    aov_data <- stats::aov(formula = expression ~ samples, data = tmp)
     return(summary(aov_data)[[1]][["Pr(>F)"]][1])
   })
   names(bg_anova) <- mk_names
-  bg_anova_adj <-  p.adjust(bg_anova, method = "BH")
+  bg_anova_adj <-  stats::p.adjust(bg_anova, method = "BH")
   bg_anova_land_mk <- list(bg_anova, bg_anova_adj)
   names(bg_anova_land_mk) <- c("bg_anova", "bg_anova_adj")
   return(bg_anova_land_mk)
@@ -116,6 +120,7 @@ get_bg_anova_land_mk <- function(list_expData, use_markers = NULL){
 #' @param use_markers
 #'
 #' @return
+#' @importFrom stats aov p.adjust
 #'
 #' @examples
 get_anova_mk <- function(list_cell_ctDist, list_expData, use_markers = NULL){
@@ -128,11 +133,11 @@ get_anova_mk <- function(list_cell_ctDist, list_expData, use_markers = NULL){
     bg_anova <- sapply(mk_names, function(i){
       tmp <- as.data.frame(comparison_unit[,c('samples', i)])
       colnames(tmp) <- c('samples', 'expression')
-      aov_data <- aov(formula = expression ~ samples, data = tmp)
+      aov_data <- stats::aov(formula = expression ~ samples, data = tmp)
       return(summary(aov_data)[[1]][["Pr(>F)"]][1])
     })
     names(bg_anova) <- mk_names
-    bg_anova_adj <-  p.adjust(bg_anova, method = "BH")
+    bg_anova_adj <-  stats::p.adjust(bg_anova, method = "BH")
     bg_anova_mk <- list(bg_anova, bg_anova_adj)
     names(bg_anova_mk) <- c("bg_anova", "bg_anova_adj")
     return(bg_anova_mk)
@@ -154,14 +159,16 @@ get_anova_mk <- function(list_cell_ctDist, list_expData, use_markers = NULL){
 #' @param method
 #'
 #' @return
-#' @import dplyr
+#' @importFrom magrittr "%>%"
+#' @importFrom dplyr group_by summarise_all
+#' @importFrom stats cor.test p.adjust
 #'
 #' @examples
 get_contrast_corr_land_mk <- function(list_cell_ctDist, list_expData, use_markers = NULL, method = "spearman"){
   ifelse(is.null(use_markers), mk_names <- rownames(list_expData[[1]]), mk_names <- use_markers)
   entire_expression <- as.data.frame(t(do.call(cbind, list_expData)))[,mk_names]
   entire_expression$samples <- rep(names(list_expData), lapply(list_expData, ncol))
-  entire_expression <- group_by(entire_expression, samples) %>% summarise_all(median) %>% as.data.frame()
+  entire_expression <- dplyr::group_by(entire_expression, samples) %>% dplyr::summarise_all(median) %>% as.data.frame()
   rownames(entire_expression) <- entire_expression$samples
   entire_expression$samples <- NULL
   tt_expression <- lapply(colnames(list_cell_ctDist[[1]]), function(cl){
@@ -182,11 +189,11 @@ get_contrast_corr_land_mk <- function(list_cell_ctDist, list_expData, use_marker
     rownames(bg_coef) <- mk_names
     colnames(bg_coef) <- mk_names
     for(i in mk_names){
-      htest <- sapply(entire_expression, cor.test, y = tt_expression[[cl]][,i], method = method)
+      htest <- sapply(entire_expression, stats::cor.test, y = tt_expression[[cl]][,i], method = method)
       bg_htest[i,] <- unlist(htest["p.value",])
       bg_coef[i,] <- unlist(htest["estimate",])
     }
-    bg_padj <- apply(bg_htest, 2, function(x) p.adjust(x, method = "BH"))
+    bg_padj <- apply(bg_htest, 2, function(x) stats::p.adjust(x, method = "BH"))
     bg_ctCor_data <- list(bg_htest, bg_coef, bg_padj)
     names(bg_ctCor_data) <- c("bg_htest", "bg_coef", "bg_padj")
     return(bg_ctCor_data)
@@ -207,14 +214,16 @@ get_contrast_corr_land_mk <- function(list_cell_ctDist, list_expData, use_marker
 #' @param method
 #'
 #' @return
-#' @import dplyr
+#' @importFrom magrittr "%>%"
+#' @importFrom dplyr group_by summarise_all
+#' @importFrom stats cor.test p.adjust
 #'
 #' @examples
 get_contrast_naive_corr_land_mk <- function(list_cell_ctDist, list_expData, use_markers = NULL, method = "spearman"){
   ifelse(is.null(use_markers), mk_names <- rownames(list_expData[[1]]), mk_names <- use_markers)
   entire_expression <- as.data.frame(t(do.call(cbind, list_expData)))[,mk_names]
   entire_expression$samples <- rep(names(list_expData), lapply(list_expData, ncol))
-  entire_expression <- group_by(entire_expression, samples) %>% summarise_all(median) %>% as.data.frame()
+  entire_expression <- dplyr::group_by(entire_expression, samples) %>% dplyr::summarise_all(median) %>% as.data.frame()
   rownames(entire_expression) <- entire_expression$samples
   entire_expression$samples <- NULL
 
@@ -231,11 +240,11 @@ get_contrast_naive_corr_land_mk <- function(list_cell_ctDist, list_expData, use_
       comparison_unit <- cbind(comparison_unit, do.call(cbind, lapply(mk_names, function(m2)
         rep(entire_expression[,m2], time = sapply(list_cell_ctDist, function(x) sum(x[,cl]))))))
       colnames(comparison_unit) <- c('tt_expression', mk_names)
-      htest <- sapply(comparison_unit[,-1], cor.test, y = comparison_unit$tt_expression, method = method)
+      htest <- sapply(comparison_unit[,-1], stats::cor.test, y = comparison_unit$tt_expression, method = method)
       bg_htest[m,] <- unlist(htest["p.value",])
       bg_coef[m,] <- unlist(htest["estimate",])
     }
-    bg_padj <- apply(bg_htest, 2, function(x) p.adjust(x, method = "BH"))
+    bg_padj <- apply(bg_htest, 2, function(x) stats::p.adjust(x, method = "BH"))
     bg_ctCor_data <- list(bg_htest, bg_coef, bg_padj)
     names(bg_ctCor_data) <- c("bg_htest", "bg_coef", "bg_padj")
     return(bg_ctCor_data)
@@ -259,6 +268,7 @@ get_contrast_naive_corr_land_mk <- function(list_cell_ctDist, list_expData, use_
 #' @param method
 #'
 #' @return
+#' @importFrom stats cor.test
 #'
 #' @examples
 htest_data_extractor_mk <- function(list_tt_expData, use_markers = NULL, method = "spearman"){
@@ -270,13 +280,14 @@ htest_data_extractor_mk <- function(list_tt_expData, use_markers = NULL, method 
           comparison_unit <- lapply(1:length(list_tt_expData), function(x) {
             if(length(list_tt_expData[[x]][[i]])==0){return(NULL)}
             if(length(list_tt_expData[[x]][[j]])==0){return(NULL)}
-            tmp <- data.frame(signaling_gene = median(list_tt_expData[[x]][[i]][g1,]), target_gene = median(list_tt_expData[[x]][[j]][g2,]))
+            tmp <- data.frame(signaling_gene = median(list_tt_expData[[x]][[i]][g1,]),
+                              target_gene = median(list_tt_expData[[x]][[j]][g2,]))
             return(tmp)
           })
           comparison_unit <- do.call(rbind, comparison_unit)
           if(length(comparison_unit)<=1){return(NULL)}
           if(length(unique(comparison_unit$signaling_gene))<=1 & length(unique(comparison_unit$target_gene))<=1){return(NULL)}
-          res <- cor.test(comparison_unit$signaling_gene, comparison_unit$target_gene, method = method)
+          res <- stats::cor.test(comparison_unit$signaling_gene, comparison_unit$target_gene, method = method)
           return(data.frame(signaling_cluster = i, signaling_marker = g1, target_cluster = j, target_marker = g2,
                             cor_significance = res$p.value, cor_coefficient = res$estimate,
                             number_of_samples = length(comparison_unit$signaling_gene)))
@@ -304,6 +315,7 @@ htest_data_extractor_mk <- function(list_tt_expData, use_markers = NULL, method 
 #' @param statistic_output if TRUE, function return complete statistic information. Defaul default is FALSE, return pass or not inf
 #'
 #' @return
+#' @importFrom magrittr "%>%"
 #'
 #' @examples
 comparator_mk <- function(gene_to_gene_cor, anova_mk, bg_corr_mk, contrast_corr_land_mk,

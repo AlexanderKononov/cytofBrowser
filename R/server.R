@@ -1,12 +1,4 @@
-#library(shiny)
-#library(ggplot2)
-#library(corrplot)
-#library(reshape2)
-#library(dplyr)
-#source("Data_preparation.R")
-#source("Clusterisation.R")
-#source("Gene_expression.R")
-#source("Correlation.R")
+
 
 #' Creation of server part of Shiny App
 #' @description the function forms the body of backend part of Shiny App.
@@ -19,7 +11,14 @@
 #'
 #' @return
 #'
-#' @import shiny shinyFiles visNetwork d3heatmap ggplot2 corrplot reshape2 dplyr neo4r
+#' @import shiny shinyFiles visNetwork d3heatmap ggplot2
+#' @importFrom magrittr "%>%"
+#' @importClassesFrom flowCore flowSet
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom corrplot corrplot
+#' @importFrom DT renderDataTable datatable
+#' @importFrom neo4r neo4j_api
+#'
 #' @examples
 cytofCore_server <- function(input, output){
 
@@ -394,8 +393,8 @@ cytofCore_server <- function(input, output){
   output$cluster_heatmap <- renderD3heatmap({
     if(is.null(gene_expression$cluster_expr_median)){return(NULL)}
     d3heatmap(gene_expression$cluster_expr_median,
-              Rowv=NA,
-              col=brewer.pal(9,"Reds")
+              Rowv = NA,
+              col = RColorBrewer::brewer.pal(9,"Reds")
               #scale="none"
               #RowSideColors=country_colours,
               #cellnote=clinical_data,
@@ -445,7 +444,7 @@ cytofCore_server <- function(input, output){
     corr_coef_matrix <- get_corr_coef_matrix(correlation$abundance_correlation)
     corr_pValue_matrix <- get_corr_pValue_matrix(correlation$abundance_correlation)
     #adj_corr_pValue_matrix <- get_adj_corr_pValue_matrix(correlation$abundance_correlation)
-    corrplot(corr_coef_matrix,
+    corrplot::corrplot(corr_coef_matrix,
              type = "lower",
              method = "circle",
              order = "hclust",
