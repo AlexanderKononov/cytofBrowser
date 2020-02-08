@@ -118,6 +118,7 @@ upload_fcs_data <- function(fcs_files){
 #' @return flowSet object with transform data by asinh function and divided
 #' by cofactor
 #' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #'
 #' @examples
 asinh_transformation <- function(fcs_raw, cofactor){
@@ -141,7 +142,7 @@ asinh_transformation <- function(fcs_raw, cofactor){
 #' @return
 #' @export
 #' @importClassesFrom flowCore flowSet
-#' @importFrom flowCore fsApply exprs
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom matrixStats colQuantiles
 #'
 #' @examples
@@ -189,7 +190,7 @@ get_cell_number <- function(fcs_raw){
 #' @param sampling_size
 #'
 #' @return
-#' @importFrom flowCore fsApply sampleNames "sampleNames<-" exprs
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-" exprs "exprs<-"
 #' @importFrom Rtsne Rtsne
 #' @importFrom umap umap
 #'

@@ -7,7 +7,7 @@
 #' @param cell_clustering
 #'
 #' @return
-#' @importFrom flowCore fsApply exprs
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom dplyr group_by summarize_all funs
 #' @importFrom stats median
 #'
@@ -34,7 +34,7 @@ get_mk_clust_heatmap_dataframe <- function(fcs_raw, use_markers, cell_clustering
 #'
 #' @return
 #' @importFrom magrittr "%>%"
-#' @importFrom flowCore fsApply exprs sampleNames "sampleNames<-"
+#' @importFrom flowCore fsApply exprs "exprs<-" sampleNames "sampleNames<-"
 #' @importFrom dplyr group_by summarise n
 #' @importFrom stats median
 #'

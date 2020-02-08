@@ -117,7 +117,7 @@ get_cell_clustering_list <- function(som, mc, k){
 #'
 #' @return
 #' @importFrom magrittr "%>%"
-#' @importFrom flowCore fsApply exprs
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom dplyr group_by summarize_all funs
 #' @importFrom utils combn
 #' @importFrom stats dist median
@@ -226,7 +226,7 @@ get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
 #' @param cell_clustering
 #'
 #' @return
-#' @importFrom flowCore fsApply exprs
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom umap umap
 #' @importFrom Rtsne Rtsne
 #'
