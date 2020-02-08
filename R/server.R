@@ -12,6 +12,7 @@
 #' @return
 #'
 #' @import shiny shinyFiles visNetwork d3heatmap ggplot2
+#' @importFrom DT renderDataTable datatable
 #' @importFrom magrittr "%>%"
 #' @importClassesFrom flowCore flowSet
 #' @importFrom RColorBrewer brewer.pal

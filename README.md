@@ -19,17 +19,6 @@ if (!requireNamespace("devtools", quietly = TRUE))
 devtools::install_github("AlexanderKononov/cytofCore")
 ```
 
-On the current stage of the project develop there are few dependency packages which don't instal and deploy automatically, such as (flowCore, FlowSOM, ConsensusClusterPlus). I advise to instal they manually:
-
-``` r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-    
-BiocManager::install("flowCore")
-BiocManager::install("FlowSOM")
-BiocManager::install("ConsensusClusterPlus")
-```
-
 Complete list of dependencies is listed in the DESCRIPTION and in the file Library\_louncher.R
 
 In a future, you can install the released version of cytofCore from [Bioconductor](https://www.bioconductor.org) with:
