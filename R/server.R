@@ -161,7 +161,7 @@ cytofCore_server <- function(input, output){
   ##### Drawing the reactive plot of cell number
   output$smpl_hist_preparation <- renderPlot({
     if(is.null(fcs_data$cell_number)){return(NULL)}
-    ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_number))+
+    ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_nmbr))+
       geom_bar(stat="identity") +
       coord_flip()
   })
@@ -512,6 +512,7 @@ cytofCore_server <- function(input, output){
   })
 
   observeEvent(input$corr_analysis, {
+    options(warn=-1)
     correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
     correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
     ##### Background contrast computing

@@ -173,7 +173,8 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
 #'
 #' @examples
 get_cell_number <- function(fcs_raw){
-  cell_number <- data.frame(smpl = flowCore::sampleNames(fcs_raw),cell_number = flowCore::fsApply(fcs_raw, nrow))
+  cell_number <- data.frame(smpl = flowCore::sampleNames(fcs_raw), cell_nmbr = flowCore::fsApply(fcs_raw, nrow))
+  colnames(cell_number) <- c('smpl', 'cell_nmbr')
   return(cell_number)
 }
 
