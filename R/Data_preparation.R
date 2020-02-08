@@ -34,7 +34,7 @@ get_fcs_metadata <- function(fcs_files){
 #' }
 #'
 #' @return flowSet object from flowCore package
-#' @importFrom flowCore read.flowSet sampleNames
+#' @importFrom flowCore read.flowSet sampleNames "sampleNames<-"
 #'
 #' @examples
 get_fcs_raw <- function(md){
@@ -57,7 +57,7 @@ get_fcs_raw <- function(md){
 #'
 #' @return data frame with information about the markers
 #' @export
-#' @importFrom flowCore pData parameters
+#' @importFrom flowCore pData "pData<-" parameters "parameters<-"
 #' @importClassesFrom flowCore flowSet
 #'
 #' @examples
@@ -141,6 +141,7 @@ asinh_transformation <- function(fcs_raw, cofactor){
 #' @return
 #' @export
 #' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore fsApply exprs
 #' @importFrom matrixStats colQuantiles
 #'
 #' @examples
@@ -167,7 +168,7 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
 #' @param fcs_raw
 #'
 #' @return
-#' @importFrom flowCore sampleNames fsApply
+#' @importFrom flowCore sampleNames "sampleNames<-" fsApply
 #'
 #' @examples
 get_cell_number <- function(fcs_raw){
@@ -188,7 +189,7 @@ get_cell_number <- function(fcs_raw){
 #' @param sampling_size
 #'
 #' @return
-#' @importFrom flowCore fsApply sampleNames exprs
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-" exprs
 #' @importFrom Rtsne Rtsne
 #' @importFrom umap umap
 #'

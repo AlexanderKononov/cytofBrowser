@@ -73,7 +73,7 @@ get_optimal_clusters <- function(mc, rate_var_expl = 0.9){
 #' @param k
 #'
 #' @return
-#' @importFrom flowCore fsApply sampleNames
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
 get_cluster_annotation <- function(fcs_raw, som, mc, k){
@@ -202,7 +202,7 @@ get_nodes <- function(edges, cell_clustering){
 #' @param plot_ncell
 #'
 #' @return
-#' @importFrom flowCore fsApply sampleNames
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
 get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
@@ -256,7 +256,7 @@ get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, c
 #' @param cell_clustering
 #'
 #' @return
-#' @importFrom flowCore fsApply sampleNames
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
 get_abundance_dataframe <- function(fcs_raw, cell_clustering){

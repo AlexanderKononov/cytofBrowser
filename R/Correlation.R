@@ -1,4 +1,3 @@
-#library(flowCore)
 
 ### Create test data
 #test_fcs_raw <- fsApply(fcs_raw, function(x) x[1:300,])

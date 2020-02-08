@@ -41,7 +41,7 @@ neo_api_ping <- function(gdb){
 #' @param gdb
 #'
 #' @return
-#' @importFrom flowCore sampleNames
+#' @importFrom flowCore sampleNames "sampleNames<-"
 #' @importFrom neo4r call_neo4j
 #'
 #' @examples
