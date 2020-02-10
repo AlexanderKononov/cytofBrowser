@@ -1,7 +1,3 @@
-#library(flowCore)
-#library(matrixStats)
-#library(Rtsne)
-
 
 ##### Create metadata
 #' Create basic metadata for flowSet object
@@ -13,8 +9,6 @@
 #' @param fcs_files list with paths
 #'
 #' @return The dataframe with paths to fcs files within one column and names of these files in another column
-#' @export
-#' @import flowCore
 #'
 #' @examples
 get_fcs_metadata <- function(fcs_files){
@@ -40,14 +34,13 @@ get_fcs_metadata <- function(fcs_files){
 #' }
 #'
 #' @return flowSet object from flowCore package
-#' @export
-#' @import flowCore
+#' @importFrom flowCore read.flowSet sampleNames "sampleNames<-"
 #'
 #' @examples
 get_fcs_raw <- function(md){
   pathes <- as.vector(md$path)
-  fcs_raw <- read.flowSet(pathes, transformation = FALSE, truncate_max_range = FALSE)
-  sampleNames(fcs_raw) <- gsub(".fcs", "", sampleNames(fcs_raw))
+  fcs_raw <- flowCore::read.flowSet(pathes, transformation = FALSE, truncate_max_range = FALSE)
+  sampleNames(fcs_raw) <- gsub(".fcs", "", flowCore::sampleNames(fcs_raw))
   return(fcs_raw)
 }
 
@@ -64,13 +57,14 @@ get_fcs_raw <- function(md){
 #'
 #' @return data frame with information about the markers
 #' @export
-#' @import flowCore
+#' @importFrom flowCore pData "pData<-" parameters "parameters<-"
+#' @importClassesFrom flowCore flowSet
 #'
 #' @examples
 get_fcs_panel <- function(fcs_raw){
   tech_patterns <-list(computational_tech = c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE", "BCKG"),
                        marker_tech = c("_BC", "BCKG", "DNA", "Cisplatin"))
-  panel <- as.data.frame(pData(parameters(fcs_raw[[1]]))[,c("name", "desc")])
+  panel <- as.data.frame(flowCore::pData(flowCore::parameters(fcs_raw[[1]]))[,c("name", "desc")])
   rownames(panel) <- NULL
   panel <- panel[sapply(panel$name, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
   panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) x[length(x)])
@@ -123,13 +117,14 @@ upload_fcs_data <- function(fcs_files){
 #'
 #' @return flowSet object with transform data by asinh function and divided
 #' by cofactor
-#' @import flowCore
+#' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore fsApply exprs "exprs<-"
 #'
 #' @examples
 asinh_transformation <- function(fcs_raw, cofactor){
   computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
   markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
-  fcs_asinh <- fsApply(fcs_raw, function(x, cf = cofactor, mk = markers){
+  fcs_asinh <- flowCore::fsApply(fcs_raw, function(x, cf = cofactor, mk = markers){
     exprs(x)[,mk] <- asinh(exprs(x)[,mk] / cf)
     return(x)})
   return(fcs_asinh)
@@ -146,13 +141,16 @@ asinh_transformation <- function(fcs_raw, cofactor){
 #'
 #' @return
 #' @export
-#' @import flowCore matrixStats
+#' @importClassesFrom flowCore flowSet
+#' @importFrom flowCore fsApply exprs "exprs<-"
+#' @importFrom matrixStats colQuantiles
+#'
 #' @examples
 outlier_by_quantile_transformation <- function(fcs_raw, quantile){
   computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
   markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
-  fcs_outlier_by_quantile <- fsApply(fcs_raw, function(x, ql = quantile, mk = markers){
-    rng <- colQuantiles(exprs(x)[,mk], probs = c(ql, 1-ql))
+  fcs_outlier_by_quantile <- flowCore::fsApply(fcs_raw, function(x, ql = quantile, mk = markers){
+    rng <- matrixStats::colQuantiles(exprs(x)[,mk], probs = c(ql, 1-ql))
     expr_data <- t((t(exprs(x)[,mk]) - rng[, 1]) / (rng[, 2] - rng[, 1]))
     expr_data[expr_data < 0] <- 0
     expr_data[expr_data > 1] <- 1
@@ -171,11 +169,12 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile){
 #' @param fcs_raw
 #'
 #' @return
-#' @import flowCore
+#' @importFrom flowCore sampleNames "sampleNames<-" fsApply
 #'
 #' @examples
 get_cell_number <- function(fcs_raw){
-  cell_number <- data.frame(smpl = sampleNames(fcs_raw),cell_number = fsApply(fcs_raw, nrow))
+  cell_number <- data.frame(smpl = flowCore::sampleNames(fcs_raw), cell_nmbr = flowCore::fsApply(fcs_raw, nrow))
+  colnames(cell_number) <- c('smpl', 'cell_nmbr')
   return(cell_number)
 }
 
@@ -192,15 +191,16 @@ get_cell_number <- function(fcs_raw){
 #' @param sampling_size
 #'
 #' @return
-#' @export
-#' @import Rtsne flowCore umap
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-" exprs "exprs<-"
+#' @importFrom Rtsne Rtsne
+#' @importFrom umap umap
 #'
 #' @examples
 sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE",
                          perplexity = 30, theta = 0.5, max_iter = 1000){
   #sampling_size <- as.integer(sampling_size/length(fcs_raw))
-  expr <- fsApply(fcs_raw[,use_markers], exprs)
-  sample_ids <- rep(sampleNames(fcs_raw), fsApply(fcs_raw, nrow))
+  expr <- flowCore::fsApply(fcs_raw[,use_markers], flowCore::exprs)
+  sample_ids <- rep(flowCore::sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
 
   ## Find and skip duplicates
   dups <- which(!duplicated(expr[, use_markers]))
@@ -225,7 +225,7 @@ sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tS
   if(method == "tSNE"){
     ##### Run t-SNE
     set.seed(1234)
-    tsne_result <- Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE,
+    tsne_result <- Rtsne::Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE,
                          perplexity = perplexity, theta = theta, max_iter = max_iter)
     #tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2])
     tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2], expr[tsne_inds, use_markers])
@@ -233,7 +233,7 @@ sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tS
 
   if(method == "UMAP"){
     ##### Run UMAP
-    umap_out <- umap(tsne_expr)
+    umap_out <- umap::umap(tsne_expr)
     tsne_out <- data.frame(tSNE1 = umap_out$layout[, 1], tSNE2 = umap_out$layout[, 2], expr[tsne_inds, use_markers])
   }
 

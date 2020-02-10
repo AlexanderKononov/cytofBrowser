@@ -6,11 +6,11 @@
 #' @param password
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r neo4j_api
 #'
 #' @examples
 get_neo_api <- function(user = "neo4j", password = "password"){
-  gdb <- neo4j_api$new(url = "http://localhost:7474", user = user, password = password)
+  gdb <- neo4r::neo4j_api$new(url = "http://localhost:7474", user = user, password = password)
   return(gdb)
 }
 
@@ -20,7 +20,7 @@ get_neo_api <- function(user = "neo4j", password = "password"){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r neo4j_api
 #'
 #' @examples
 neo_api_ping <- function(gdb){
@@ -41,13 +41,14 @@ neo_api_ping <- function(gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom flowCore sampleNames "sampleNames<-"
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_sample_GDB <- function(fcs_raw, gdb){
-  call_neo4j('CREATE CONSTRAINT ON (b:Sample) ASSERT b.name IS UNIQUE;', gdb)
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (b:Sample) ASSERT b.name IS UNIQUE;', gdb)
   for(i in 1:length(fcs_raw)){
-    call_neo4j(paste0('CREATE (:Sample { name: \'', sampleNames(fcs_raw)[i],
+    neo4r::call_neo4j(paste0('CREATE (:Sample { name: \'', flowCore::sampleNames(fcs_raw)[i],
                       '\', cell_number: ', nrow(fcs_raw[[i]]), '})'), gdb)
   }
 }
@@ -59,13 +60,13 @@ add_sample_GDB <- function(fcs_raw, gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_marker_GDB <- function(use_markers, gdb){
-  call_neo4j('CREATE CONSTRAINT ON (b:Marker) ASSERT b.name IS UNIQUE;', gdb)
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (b:Marker) ASSERT b.name IS UNIQUE;', gdb)
   for(i in 1:length(use_markers)){
-    call_neo4j(paste0('CREATE (:Marker { name: \'', use_markers[i],
+    neo4r::call_neo4j(paste0('CREATE (:Marker { name: \'', use_markers[i],
                       '\', antigen: \'', names(use_markers)[i], '\' })'), gdb)
   }
 }
@@ -77,14 +78,14 @@ add_marker_GDB <- function(use_markers, gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_cluster_GDB <- function(cell_clustering, gdb){
-  call_neo4j('CREATE CONSTRAINT ON (b:Cluster) ASSERT b.name IS UNIQUE;', gdb)
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (b:Cluster) ASSERT b.name IS UNIQUE;', gdb)
   cluster <- table(cell_clustering)
   for(i in 1:length(cluster)){
-    call_neo4j(paste0('CREATE (:Cluster { name: \'', names(cluster)[i],
+    neo4r::call_neo4j(paste0('CREATE (:Cluster { name: \'', names(cluster)[i],
                       '\', cell_number: \'', cluster[[i]], '\' })'), gdb)
   }
 }
@@ -96,15 +97,15 @@ add_cluster_GDB <- function(cell_clustering, gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_populatio_GDB <- function(cell_clustering_list, gdb){
-  call_neo4j('CREATE CONSTRAINT ON (b:Population) ASSERT b.name IS UNIQUE;', gdb)
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (b:Population) ASSERT b.name IS UNIQUE;', gdb)
   for(i in 1:length(cell_clustering_list)){
     cluster <- table(cell_clustering_list[[i]])
     for(j in 1:length(cluster)){
-      call_neo4j(paste0('MATCH (s:Sample { name: \'',  names(cell_clustering_list)[[i]],
+      neo4r::call_neo4j(paste0('MATCH (s:Sample { name: \'',  names(cell_clustering_list)[[i]],
                         '\' }), (c:Cluster { name: \'', names(cluster)[j],
                         '\' }) CREATE (s)-[:Contains]->(p:Population { name: \'',
                         names(cluster)[j], '_', names(cell_clustering_list)[[i]],
@@ -123,16 +124,16 @@ add_populatio_GDB <- function(cell_clustering_list, gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_observation_GDB <- function(gdb){
-  call_neo4j('CREATE CONSTRAINT ON (o:Observation) ASSERT o.name IS UNIQUE;', gdb)
-  p <- unnest_nodes(call_neo4j('MATCH (p:Population) RETURN p', gdb, type = 'graph')$nodes)
-  m <- unnest_nodes(call_neo4j('MATCH (m:Marker) RETURN m', gdb, type = 'graph')$nodes)
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (o:Observation) ASSERT o.name IS UNIQUE;', gdb)
+  p <- unnest_nodes(neo4r::call_neo4j('MATCH (p:Population) RETURN p', gdb, type = 'graph')$nodes)
+  m <- unnest_nodes(neo4r::call_neo4j('MATCH (m:Marker) RETURN m', gdb, type = 'graph')$nodes)
   for (i in 1:nrow(m)) {
     for (j in 1:nrow(p)) {
-      call_neo4j(paste0('MATCH (m:Marker { name: \'', m$name[i],
+      neo4r::call_neo4j(paste0('MATCH (m:Marker { name: \'', m$name[i],
                         '\' }), (p:Population { name: \'', p$name[j],
                         '\' }) CREATE (m)-[:Contains]->(o:Observation { name: \'',
                         m$name[i], '_', p$name[j],
@@ -152,16 +153,16 @@ add_observation_GDB <- function(gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j unnest_nodes
 #'
 #' @examples
 add_phenounite_GDB <- function(gdb){
-  call_neo4j('CREATE CONSTRAINT ON (u:Phenounite) ASSERT u.name IS UNIQUE;', gdb)
-  m <- as.data.frame(unnest_nodes(call_neo4j('MATCH (m:Marker) RETURN m', gdb, type = 'graph')$nodes))
-  c <- as.data.frame(unnest_nodes(call_neo4j('MATCH (c:Cluster) RETURN c', gdb, type = 'graph')$nodes))
+  neo4r::call_neo4j('CREATE CONSTRAINT ON (u:Phenounite) ASSERT u.name IS UNIQUE;', gdb)
+  m <- as.data.frame(neo4r::unnest_nodes(neo4r::call_neo4j('MATCH (m:Marker) RETURN m', gdb, type = 'graph')$nodes))
+  c <- as.data.frame(neo4r::unnest_nodes(neo4r::call_neo4j('MATCH (c:Cluster) RETURN c', gdb, type = 'graph')$nodes))
   for (i in 1:nrow(m)) {
     for (j in 1:nrow(c)) {
-      call_neo4j(paste0('MATCH (m:Marker { name: \'', m$name[i],
+      neo4r::call_neo4j(paste0('MATCH (m:Marker { name: \'', m$name[i],
                         '\' }), (c:Cluster { name: \'', c$name[j],
                         '\' }) CREATE (m)-[:Contains]->(u:Phenounite { name: \'',
                         c$name[j], '_', m$name[i],
@@ -171,9 +172,9 @@ add_phenounite_GDB <- function(gdb){
                         'CREATE (c)-[:Contains]->(u)'), gdb)
     }
   }
-  o <- unnest_nodes(call_neo4j('MATCH (o:Observation) RETURN o', gdb, type = 'graph')$nodes)
+  o <- neo4r::unnest_nodes(neo4r::call_neo4j('MATCH (o:Observation) RETURN o', gdb, type = 'graph')$nodes)
   for (i in 1:nrow(o)) {
-    call_neo4j(paste0('MATCH (u:Phenounite { name: \'',
+    neo4r::call_neo4j(paste0('MATCH (u:Phenounite { name: \'',
                       o$cluster[i], '_', o$marker[i],
                       '\' }), (o:Observation { name: \'', o$name[i],
                       '\' }) CREATE (o)-[:Contains]->(u)'), gdb)
@@ -188,12 +189,12 @@ add_phenounite_GDB <- function(gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_signals_between_clusters_GDB <- function(signals_between_clusters, gdb){
   for (i in 1:nrow(signals_between_clusters)){
-    call_neo4j(paste0('MATCH (c:Cluster { name: \'', as.character(signals_between_clusters$signaling_cluster[i]),
+    neo4r::call_neo4j(paste0('MATCH (c:Cluster { name: \'', as.character(signals_between_clusters$signaling_cluster[i]),
                       '\' }), (u:Phenounite { name: \'',
                       as.character(signals_between_clusters$targetet_cluster[i]),
                       '_', as.character(signals_between_clusters$gene_in_target_cluster[i]),
@@ -211,12 +212,12 @@ add_signals_between_clusters_GDB <- function(signals_between_clusters, gdb){
 #' @param gdb
 #'
 #' @return
-#' @import neo4r
+#' @importFrom neo4r call_neo4j
 #'
 #' @examples
 add_signals_in_cluster_GDB <- function(signals_in_cluster, gdb){
   for (i in 1:nrow(signals_in_cluster)){
-    call_neo4j(paste0('MATCH (c:Cluster { name: \'', as.character(signals_in_cluster$cluster[i]),
+    neo4r::call_neo4j(paste0('MATCH (c:Cluster { name: \'', as.character(signals_in_cluster$cluster[i]),
                       '\' }), (u:Phenounite { name: \'',
                       as.character(signals_in_cluster$cluster[i]),
                       '_', as.character(signals_in_cluster$gene[i]),
