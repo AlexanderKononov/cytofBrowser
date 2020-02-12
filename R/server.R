@@ -37,30 +37,39 @@ cytofCore_server <- function(input, output){
   plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$fcs_upload, {
-    ## Get row data fcs files
-    fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
-    fcs_data$fcs_raw <- get_fcs_raw(fcs_data$md)
-    fcs_data$panel <- get_fcs_panel(fcs_data$fcs_raw)
-    fcs_data$use_markers <- get_use_marker(fcs_data$panel)
-    fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
-    ## Transform row data to scaled data by set parameters
-    if('asinh' %in% input$transformation_list){
-      fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
-    }
-    if('outlier_by_quantile' %in% isolate(input$transformation_list)){
-      fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
-    }
-    ## Preparing data for scatterplot
-    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
-    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
-    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
-    sampling_size <- 0.5
-    method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
-    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                  perplexity = data_prep_settings$perplexity,
-                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+    withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
+      ## Get row data fcs files
+      fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
+      incProgress(1, detail = "Upload data" )
+      fcs_data$fcs_raw <- get_fcs_raw(fcs_data$md)
+      incProgress(1, detail = "Extraction panel")
+      fcs_data$panel <- get_fcs_panel(fcs_data$fcs_raw)
+      incProgress(1, detail = "Delete background markers" )
+      fcs_data$use_markers <- get_use_marker(fcs_data$panel)
+      incProgress(1, detail = "Cell number calculation" )
+      fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
+      incProgress(1, detail = "Transformation" )
+      ## Transform row data to scaled data by set parameters
+      if('asinh' %in% input$transformation_list){
+        fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
+      }
+      if('outlier_by_quantile' %in% isolate(input$transformation_list)){
+        fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
+      }
+      incProgress(1, detail = "Plotting" )
+      ## Preparing data for scatterplot
+      if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+      if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+      if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
+      sampling_size <- 0.5
+      method <- "tSNE"
+      if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
+      if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                    perplexity = data_prep_settings$perplexity,
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+      incProgress(1)
+    })
   })
 
   #### Create UI to simple panele
@@ -130,31 +139,39 @@ cytofCore_server <- function(input, output){
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw, {
     if(is.null(fcs_data$fcs_raw)){return(NULL)}
-    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
-    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
-    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
-    sampling_size <- 0.5
-    method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
-    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                  perplexity = data_prep_settings$perplexity,
-                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+    withProgress(message = "Redrawing", min =0, max = 7, value = 0,{
+      if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+      if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+      if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
+      sampling_size <- 0.5
+      method <- "tSNE"
+      if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
+      if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+      incProgress(3)
+      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                    perplexity = data_prep_settings$perplexity,
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+      incProgress(4)
+    })
   })
 
   ##### Update reactive object "fcs_data" after excluding markers
   observeEvent(input$exclud_mk_button, {
-    if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
-    if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
-    if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
-    sampling_size <- 0.5
-    method <- "tSNE"
-    if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
-    if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-    fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
-    fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                  perplexity = data_prep_settings$perplexity,
-                                  theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+    withProgress(message = "Excluding", min =0, max = 7, value = 0,{
+      if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+      if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+      if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
+      sampling_size <- 0.5
+      method <- "tSNE"
+      if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
+      if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+      fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
+      incProgress(3, detail = "Excluding")
+      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                    perplexity = data_prep_settings$perplexity,
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+      incProgress(4, detail = "Redrawing")
+    })
   })
 
   ##### Reactively show current use_markers from "fcs_data" object
@@ -223,36 +240,48 @@ cytofCore_server <- function(input, output){
   cluster_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
 
   observeEvent(input$start_clusterization, {
-    ## Clusterisation with set parameters
-    clusterisation$clust_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_clusterisation)]
-    som <- get_som(fcs_data$fcs_raw, clusterisation$clust_markers)
-    if(input$mode_k_choice == 1){k <- input$maxK}
-    if(input$mode_k_choice == 2){k <- input$k}
-    mc <- get_consensusClust(som, maxK = k)
-    if(input$mode_k_choice == 1){k <- get_optimal_clusters(mc, rate_var_expl = input$rate_var_explan)}
-    clusterisation$cell_clustering_list <- get_cluster_annotation(fcs_data$fcs_raw, som, mc, k)
-    clusterisation$cell_clustering <- get_cell_clustering_list(som, mc, k)
-    ## Estimation of the distance between clusters
-    clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
-    ## Calculation of edges and nodes for graph
-    clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
-    clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
-    ## Create a data frame to UMAP or tSNE plotting
-    if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
-    if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
-    if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
-    sampling_size <- 0.5
-    method <- "UMAP"
-    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
-    if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
-    clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
-                                                 clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
-                                                 cell_clustering = clusterisation$cell_clustering, method = method,
-                                                 perplexity = cluster_settings$perplexity,
-                                                 theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
-    clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
-                                                           cell_clustering = clusterisation$cell_clustering)
+    withProgress(message = "Clustering", min =0, max = 7, value = 0,{
+      ## Clusterisation with set parameters
+      clusterisation$clust_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_clusterisation)]
+      som <- get_som(fcs_data$fcs_raw, clusterisation$clust_markers)
+      if(input$mode_k_choice == 1){k <- input$maxK}
+      if(input$mode_k_choice == 2){k <- input$k}
+      incProgress(1, detail = "clustering")
+      mc <- get_consensusClust(som, maxK = k)
+      incProgress(1, detail = "forming cluster lists")
+      if(input$mode_k_choice == 1){k <- get_optimal_clusters(mc, rate_var_expl = input$rate_var_explan)}
+      clusterisation$cell_clustering_list <- get_cluster_annotation(fcs_data$fcs_raw, som, mc, k)
+      clusterisation$cell_clustering <- get_cell_clustering_list(som, mc, k)
+      incProgress(1, detail = "distance between clusters")
+      ## Estimation of the distance between clusters
+      clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
+      incProgress(1, detail = "graph elements")
+      ## Calculation of edges and nodes for graph
+      clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
+      clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
+      incProgress(1, detail = "drawing scatter plot")
+      ## Create a data frame to UMAP or tSNE plotting
+      if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
+      if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
+      if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
+      sampling_size <- 0.5
+      method <- "UMAP"
+      if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
+      if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
+      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
+      clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
+                                                   clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
+                                                   cell_clustering = clusterisation$cell_clustering, method = method,
+                                                   perplexity = cluster_settings$perplexity,
+                                                   theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
+      incProgress(1, detail = "drawing abundance plot")
+      clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                             cell_clustering = clusterisation$cell_clustering)
+      incProgress(1)
+    })
+
+
+
   })
 
   #### Create UI to simple panele
@@ -274,20 +303,24 @@ cytofCore_server <- function(input, output){
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
-    if(is.null(clusterisation$cell_clustering)){return(NULL)}
-    if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
-    if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
-    if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
-    sampling_size <- 0.5
-    method <- "UMAP"
-    if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
-    if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-    tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
-    clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
-                                                 clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
-                                                 cell_clustering = clusterisation$cell_clustering, method = method,
-                                                 perplexity = cluster_settings$perplexity,
-                                                 theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
+    withProgress(message = "Redrawing", min =0, max = 7, value = 0,{
+      if(is.null(clusterisation$cell_clustering)){return(NULL)}
+      if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
+      if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
+      if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
+      sampling_size <- 0.5
+      method <- "UMAP"
+      if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
+      if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
+      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
+      incProgress(3)
+      clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
+                                                   clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
+                                                   cell_clustering = clusterisation$cell_clustering, method = method,
+                                                   perplexity = cluster_settings$perplexity,
+                                                   theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
+      incProgress(4)
+    })
   })
 
   ##### Create UI to choose excluded markers from clusterisation
@@ -321,16 +354,25 @@ cytofCore_server <- function(input, output){
 
   ##### Renew clusterisation reactive object after merging
   observeEvent(input$merge_clusterisation, {
-    clusterisation$cell_clustering <- cluster_merging(clusterisation$cell_clustering, input$cluster_to_merge_clusterisation)
-    clusterisation$cell_clustering_list <- lapply(clusterisation$cell_clustering_list, function(x)
-                                                  cluster_merging(x,input$cluster_to_merge_clusterisation))
-    ## Estimation of the distance between clusters
-    clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
-    ## Calculation of edges and nodes for graph
-    clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
-    clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
-    clusterisation$umap_df$cluster <- cluster_merging(clusterisation$umap_df$cluster, input$cluster_to_merge_clusterisation)
-    clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+    withProgress(message = "Merging", min =0, max = 7, value = 0,{
+      clusterisation$cell_clustering <- cluster_merging(clusterisation$cell_clustering, input$cluster_to_merge_clusterisation)
+      incProgress(1)
+      clusterisation$cell_clustering_list <- lapply(clusterisation$cell_clustering_list, function(x)
+        cluster_merging(x,input$cluster_to_merge_clusterisation))
+      incProgress(1)
+      ## Estimation of the distance between clusters
+      clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
+      incProgress(1)
+      ## Calculation of edges and nodes for graph
+      clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
+      incProgress(1)
+      clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
+      incProgress(1)
+      clusterisation$umap_df$cluster <- cluster_merging(clusterisation$umap_df$cluster, input$cluster_to_merge_clusterisation)
+      incProgress(1)
+      clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+      incProgress(1)
+    })
   })
 
   ##### Create UI to rename clusters
@@ -348,17 +390,24 @@ cytofCore_server <- function(input, output){
   observeEvent(input$rename_clusterisation, {
     if(is.null(input$new_cluster_name_clusterisation)){return(NULL)}
     if(input$new_cluster_name_clusterisation == ""){return(NULL)}
-    clusterisation$cell_clustering[clusterisation$cell_clustering==input$current_node_id] <- input$new_cluster_name_clusterisation
-    clusterisation$cell_clustering_list <- lapply(clusterisation$cell_clustering_list, function(x)
-      x[x==input$current_node_id] <- input$new_cluster_name_clusterisation)
-    ## Estimation of the distance between clusters
-    clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
-    ## Calculation of edges and nodes for graph
-    clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
-    clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
-    levels(clusterisation$umap_df$cluster)[grep(input$current_node_id, levels(clusterisation$umap_df$cluster))] <- input$new_cluster_name_clusterisation
-    #clusterisation$umap_df$cluster[clusterisation$umap_df$cluster==input$current_node_id] <- input$new_cluster_name_clusterisation
-    #clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+    withProgress(message = "Renaming", min =0, max = 5, value = 0,{
+      clusterisation$cell_clustering[clusterisation$cell_clustering==input$current_node_id] <- input$new_cluster_name_clusterisation
+      clusterisation$cell_clustering_list <- lapply(clusterisation$cell_clustering_list, function(x)
+        x[x==input$current_node_id] <- input$new_cluster_name_clusterisation)
+      incProgress(1)
+      ## Estimation of the distance between clusters
+      clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
+      incProgress(1)
+      ## Calculation of edges and nodes for graph
+      clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
+      incProgress(1)
+      clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
+      incProgress(1)
+      levels(clusterisation$umap_df$cluster)[grep(input$current_node_id, levels(clusterisation$umap_df$cluster))] <- input$new_cluster_name_clusterisation
+      incProgress(1)
+      #clusterisation$umap_df$cluster[clusterisation$umap_df$cluster==input$current_node_id] <- input$new_cluster_name_clusterisation
+      #clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+    })
   })
 
   ##### Drawing the reactive and interactive UMAP plot
@@ -437,32 +486,43 @@ cytofCore_server <- function(input, output){
   ##### Create "gene_expression" as reactive object with grouped expression information
   gene_expression <- reactiveValues()
   observeEvent(input$start_clusterization, {
-    summarize_mode <- input$method_summarize_expression
-    if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
-    ## Preparing data for heatmap
-    gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
-                                                                          use_markers = fcs_data$use_markers,
-                                                                          cell_clustering = clusterisation$cell_clustering,
-                                                                          summarize_mode = summarize_mode)
-    gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
-                                                                   use_markers = fcs_data$use_markers,
-                                                                   cell_clustering = clusterisation$cell_clustering,
-                                                                   summarize_mode = summarize_mode)
+    withProgress(message = "Heatmap drawing", min =0, max = 3, value = 0,{
+      summarize_mode <- input$method_summarize_expression
+      if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
+      incProgress(1)
+      ## Preparing data for heatmap
+      gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                            use_markers = fcs_data$use_markers,
+                                                                            cell_clustering = clusterisation$cell_clustering,
+                                                                            summarize_mode = summarize_mode)
+      incProgress(1)
+      gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                     use_markers = fcs_data$use_markers,
+                                                                     cell_clustering = clusterisation$cell_clustering,
+                                                                     summarize_mode = summarize_mode)
+      incProgress(1)
+    })
+
   })
 
   ##### Redrawing hm after chanch summarize mode
   observeEvent(input$redraw_expression, {
-    summarize_mode <- input$method_summarize_expression
-    if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
-    ## Preparing data for heatmap
-    gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
-                                                                          use_markers = fcs_data$use_markers,
-                                                                          cell_clustering = clusterisation$cell_clustering,
-                                                                          summarize_mode = summarize_mode)
-    gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
-                                                                   use_markers = fcs_data$use_markers,
-                                                                   cell_clustering = clusterisation$cell_clustering,
-                                                                   summarize_mode = summarize_mode)
+    withProgress(message = "Redrawing", min =0, max = 3, value = 0,{
+      summarize_mode <- input$method_summarize_expression
+      if(is.null(input$method_summarize_expression)){summarize_mode <- 'median'}
+      incProgress(1)
+      ## Preparing data for heatmap
+      gene_expression$cluster_expr_median <- get_mk_clust_heatmap_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                            use_markers = fcs_data$use_markers,
+                                                                            cell_clustering = clusterisation$cell_clustering,
+                                                                            summarize_mode = summarize_mode)
+      incProgress(1)
+      gene_expression$deconvol_expr_median <- get_deconvol_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                     use_markers = fcs_data$use_markers,
+                                                                     cell_clustering = clusterisation$cell_clustering,
+                                                                     summarize_mode = summarize_mode)
+      incProgress(1)
+    })
   })
 
   ##### Drawing expression heatmap of markers per clusters
@@ -561,11 +621,16 @@ cytofCore_server <- function(input, output){
   ##### Create "correlation" as reactive object with correlation information
   correlation <- reactiveValues()
   observeEvent(input$start_clusterization, {
-    ## Get the data of cluster abundance
-    correlation$list_cell_ctDist <- get_list_cell_ctDist(clusterisation$cell_clustering_list)
-    correlation$abundence_data <- get_abundance(correlation$list_cell_ctDist)
-    ## Get correlations of clusters by its abundance
-    correlation$abundance_correlation <- get_abundance_correlation(correlation$abundence_data)
+    withProgress(message = "Cluster abundances", min =0, max = 3, value = 0,{
+      ## Get the data of cluster abundance
+      correlation$list_cell_ctDist <- get_list_cell_ctDist(clusterisation$cell_clustering_list)
+      incProgress(1)
+      correlation$abundence_data <- get_abundance(correlation$list_cell_ctDist)
+      incProgress(1)
+      ## Get correlations of clusters by its abundance
+      correlation$abundance_correlation <- get_abundance_correlation(correlation$abundence_data)
+      incProgress(1)
+    })
   })
 
   ##### Drawing of triangle plot with correlations by cluster abundances
@@ -674,24 +739,34 @@ cytofCore_server <- function(input, output){
 
   observeEvent(input$corr_analysis, {
     options(warn=-1)
-    correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
-    correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
-    ##### Background contrast computing
-    correlation$bg_ctCor_data <- backgraund_correlation(list_cell_ctDist = correlation$list_cell_ctDist,
-                                                        list_expData = correlation$list_expData,
-                                                        method = corr_settings$method) ### Time-concuming (~30min)
-    correlation$bg_anova <- background_anova(correlation$list_cell_ctDist, correlation$list_expData) ### Time-concuming (~40min)
-    ##### Analys for each signalling call type
-    correlation$signal_Stat <- signal_extractor(correlation$list_cell_ctDist, correlation$list_tt_expData,
-                                                correlation$bg_ctCor_data, correlation$bg_anova,
-                                                method = corr_settings$method,
-                                                bg_anova_alpha = corr_settings$bg_anova_alpha,
-                                                bg_ctCor_alpha = corr_settings$bg_ctCor_alpha,
-                                                gene_ctCor_alpha = corr_settings$gene_ctCor_alpha) ### Time-concuming (~40min per cell type)
-    correlation$signals <- signal_filter(correlation$signal_Stat, pValue = corr_settings$pValue,
-                                         threshold = corr_settings$threshold)
-    correlation$signals_between_clusters <- get_signals_between_clusters(correlation$signals)
-    correlation$signals_in_cluster <- get_signals_in_cluster(correlation$signals)
+    withProgress(message = "Abundances correlation", min =0, max = 6, value = 0,{
+      correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
+      correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
+      incProgress(1, detail = "background correlations")
+      ##### Background contrast computing
+      correlation$bg_ctCor_data <- backgraund_correlation(list_cell_ctDist = correlation$list_cell_ctDist,
+                                                          list_expData = correlation$list_expData,
+                                                          method = corr_settings$method) ### Time-concuming (~30min)
+      incProgress(1, detail = "background anova")
+      correlation$bg_anova <- background_anova(correlation$list_cell_ctDist, correlation$list_expData) ### Time-concuming (~40min)
+      incProgress(1, detail = "signals extraction")
+      ##### Analys for each signalling call type
+      correlation$signal_Stat <- signal_extractor(correlation$list_cell_ctDist, correlation$list_tt_expData,
+                                                  correlation$bg_ctCor_data, correlation$bg_anova,
+                                                  method = corr_settings$method,
+                                                  bg_anova_alpha = corr_settings$bg_anova_alpha,
+                                                  bg_ctCor_alpha = corr_settings$bg_ctCor_alpha,
+                                                  gene_ctCor_alpha = corr_settings$gene_ctCor_alpha) ### Time-concuming (~40min per cell type)
+      incProgress(1, detail = "signals filtration")
+      correlation$signals <- signal_filter(correlation$signal_Stat, pValue = corr_settings$pValue,
+                                           threshold = corr_settings$threshold)
+      incProgress(1, detail = "connection to graph")
+      correlation$signals_between_clusters <- get_signals_between_clusters(correlation$signals)
+      correlation$signals_in_cluster <- get_signals_in_cluster(correlation$signals)
+      incProgress(1)
+
+    })
+
   })
 
   ##### Drawing the reactive and interactive graph network2 with clusters
@@ -807,50 +882,59 @@ cytofCore_server <- function(input, output){
   observeEvent(input$mk_corr_analysis, {
     options(warn=-1)
     print("Correlation analysis started...")
-    correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
-    correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
-    ##### Background contrast computing
-    if(length(fcs_data$fcs_raw) < 4){
-      correlation$bg_corr_mk <- get_bg_naive_corr_land_mk(list_expData = correlation$list_expData,
-                                                                use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
-      correlation$contrast_corr_land_mk <- get_contrast_naive_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
-                                                                           list_expData = correlation$list_expData,
-                                                                           use_markers = fcs_data$use_markers,
-                                                                           method = mk_corr_settings$method)
-    }
-    if(length(fcs_data$fcs_raw) >= 4){
-      correlation$bg_corr_mk <- get_bg_corr_land_mk(list_expData = correlation$list_expData,
-                                                    use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
-      correlation$contrast_corr_land_mk <- get_contrast_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
-                                                                     list_expData = correlation$list_expData,
-                                                                     use_markers = fcs_data$use_markers,
-                                                                     method = mk_corr_settings$method)
-    }
-    correlation$anova_mk <- get_anova_mk(list_cell_ctDist = correlation$list_cell_ctDist,
-                                         list_expData = correlation$list_expData, use_markers = fcs_data$use_markers)
-    ##### Analys for each signalling call type
-    correlation$mk_to_mk_corr <- htest_data_extractor_mk(list_tt_expData = correlation$list_tt_expData,
-                                                         use_markers = fcs_data$use_markers,
-                                                         method = mk_corr_settings$method)
-    sig_summary <- comparator_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, anova_mk = correlation$anova_mk,
-                                 bg_corr_mk = correlation$bg_corr_mk, contrast_corr_land_mk = correlation$contrast_corr_land_mk,
-                                 anova_mk_alpha = mk_corr_settings$bg_anova_alpha,
-                                 bg_corr_mk_alpha = mk_corr_settings$bg_ctCor_alpha,
-                                 contrast_corr_land_mk_alpha = mk_corr_settings$bg_ctCor_alpha)
-    correlation$signals_mk <- filter_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, sig_summary = sig_summary,
-                                        threshold = mk_corr_settings$threshold, pValue = mk_corr_settings$pValue)
-    ##### Dividing signals on signals between and in clusters
-    correlation$signal_in_cluster_mk <- get_signal_in_cluster_mk(correlation$signals_mk)
-    correlation$signal_in_cluster_mk$marker_1 <- names(fcs_data$use_markers[
-      match(correlation$signal_in_cluster_mk$marker_1, fcs_data$use_markers)])
-    correlation$signal_in_cluster_mk$marker_2 <- names(fcs_data$use_markers[
-      match(correlation$signal_in_cluster_mk$marker_2, fcs_data$use_markers)])
+    withProgress(message = "Marker correlations", min =0, max = 7, value = 0,{
+      correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
+      correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
+      incProgress(1, detail = "background correlations")
+      ##### Background contrast computing
+      if(length(fcs_data$fcs_raw) < 4){
+        correlation$bg_corr_mk <- get_bg_naive_corr_land_mk(list_expData = correlation$list_expData,
+                                                            use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
+        correlation$contrast_corr_land_mk <- get_contrast_naive_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                                                             list_expData = correlation$list_expData,
+                                                                             use_markers = fcs_data$use_markers,
+                                                                             method = mk_corr_settings$method)
+      }
+      if(length(fcs_data$fcs_raw) >= 4){
+        correlation$bg_corr_mk <- get_bg_corr_land_mk(list_expData = correlation$list_expData,
+                                                      use_markers = fcs_data$use_markers, method = mk_corr_settings$method)
+        correlation$contrast_corr_land_mk <- get_contrast_corr_land_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                                                       list_expData = correlation$list_expData,
+                                                                       use_markers = fcs_data$use_markers,
+                                                                       method = mk_corr_settings$method)
+      }
+      incProgress(1, detail = "anova analysis")
+      correlation$anova_mk <- get_anova_mk(list_cell_ctDist = correlation$list_cell_ctDist,
+                                           list_expData = correlation$list_expData, use_markers = fcs_data$use_markers)
+      incProgress(1, detail = "complex correlations")
+      ##### Analys for each signalling call type
+      correlation$mk_to_mk_corr <- htest_data_extractor_mk(list_tt_expData = correlation$list_tt_expData,
+                                                           use_markers = fcs_data$use_markers,
+                                                           method = mk_corr_settings$method)
+      incProgress(1, detail = "background comparison")
+      sig_summary <- comparator_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, anova_mk = correlation$anova_mk,
+                                   bg_corr_mk = correlation$bg_corr_mk, contrast_corr_land_mk = correlation$contrast_corr_land_mk,
+                                   anova_mk_alpha = mk_corr_settings$bg_anova_alpha,
+                                   bg_corr_mk_alpha = mk_corr_settings$bg_ctCor_alpha,
+                                   contrast_corr_land_mk_alpha = mk_corr_settings$bg_ctCor_alpha)
+      incProgress(1, detail = "signal filtering")
+      correlation$signals_mk <- filter_mk(gene_to_gene_cor = correlation$mk_to_mk_corr, sig_summary = sig_summary,
+                                          threshold = mk_corr_settings$threshold, pValue = mk_corr_settings$pValue)
+      incProgress(1, detail = "signal graph association")
+      ##### Dividing signals on signals between and in clusters
+      correlation$signal_in_cluster_mk <- get_signal_in_cluster_mk(correlation$signals_mk)
+      correlation$signal_in_cluster_mk$marker_1 <- names(fcs_data$use_markers[
+        match(correlation$signal_in_cluster_mk$marker_1, fcs_data$use_markers)])
+      correlation$signal_in_cluster_mk$marker_2 <- names(fcs_data$use_markers[
+        match(correlation$signal_in_cluster_mk$marker_2, fcs_data$use_markers)])
 
-    correlation$signal_between_cluster_mk <- get_signal_between_cluster_mk(correlation$signals_mk)
-    correlation$signal_between_cluster_mk$signaling_marker <- names(fcs_data$use_markers[
-      match(correlation$signal_between_cluster_mk$signaling_marker, fcs_data$use_markers)])
-    correlation$signal_between_cluster_mk$target_marker <- names(fcs_data$use_markers[
-      match(correlation$signal_between_cluster_mk$target_marker, fcs_data$use_markers)])
+      correlation$signal_between_cluster_mk <- get_signal_between_cluster_mk(correlation$signals_mk)
+      correlation$signal_between_cluster_mk$signaling_marker <- names(fcs_data$use_markers[
+        match(correlation$signal_between_cluster_mk$signaling_marker, fcs_data$use_markers)])
+      correlation$signal_between_cluster_mk$target_marker <- names(fcs_data$use_markers[
+        match(correlation$signal_between_cluster_mk$target_marker, fcs_data$use_markers)])
+      incProgress(1)
+    })
     print("... Correlation analysis finished")
   })
 
