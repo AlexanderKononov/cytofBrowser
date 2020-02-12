@@ -303,7 +303,7 @@ cytofCore_server <- function(input, output){
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
-    withProgress(message = "Redrawing", min =0, max = 7, value = 0,{
+    withProgress(message = "Redrawing", min =0, max = 2, value = 0,{
       if(is.null(clusterisation$cell_clustering)){return(NULL)}
       if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
       if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
@@ -313,13 +313,13 @@ cytofCore_server <- function(input, output){
       if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
       if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
       tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
-      incProgress(3)
+      incProgress(1)
       clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                    clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
                                                    cell_clustering = clusterisation$cell_clustering, method = method,
                                                    perplexity = cluster_settings$perplexity,
                                                    theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
-      incProgress(4)
+      incProgress(1)
     })
   })
 

@@ -144,9 +144,11 @@ get_euclid_dist <- function(fcs_raw, use_markers, cell_clustering){
 #'
 #' @examples
 get_edges <- function(cluster_euclidean_distance){
+  width <- log2(as.numeric(cluster_euclidean_distance$euclidean_distance))/5
+  width <- 1+((width - min(width))/(max(width) - min(width))*10)
   edges <- data.frame(from = cluster_euclidean_distance$Cluster_1,
                       to = cluster_euclidean_distance$Cluster_2,
-                      width  = as.numeric(log2(cluster_euclidean_distance$euclidean_distance)/2),
+                      width  = width,
                       smooth = T)
   edges <- cluster_euclidean_distance[,1:3]
   colnames(edges) <- c('from', 'to', 'width')
