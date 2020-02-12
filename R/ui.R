@@ -56,19 +56,43 @@ cytofCoreGUI <-function(){
                             fluidRow(uiOutput('dvance_data_prep_ui')),
                             fluidRow(
                               column(8,
-                                     plotOutput("tSNE_plot_data_preparation")
+                                     plotOutput('scatter_plot_data_preparation'),
+                                     fluidRow(
+                                       column(2, downloadButton('dwn_scatter_dp', "")),
+                                       column(4,
+                                              selectInput('dwn_scatter_dp_ext', label = NULL,
+                                                          choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                         'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                       )
+                                     )
                                      ),
                               column(4,
-                                     plotOutput("smpl_hist_preparation")
+                                     plotOutput("smpl_hist_preparation"),
+                                     fluidRow(
+                                       column(4, downloadButton('dwn_smpl_hist_dp', "")),
+                                       column(7,
+                                              selectInput('dwn_smpl_hist_dp_ext', label = NULL,
+                                                          choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                         'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                       )
+                                     )
                                      )
                             ),
                             fluidRow(
                               column(6,
                                      uiOutput("mk_target_data_preparation_ui"),
-                                     uiOutput("mk_subset_data_preparation_ui"),
+                                     uiOutput("mk_subset_data_preparation_ui")
                                      ),
                               column(6,
-                                     plotOutput("mk_hist_data_preparation")
+                                     plotOutput('mk_hist_data_preparation'),
+                                     fluidRow(
+                                       column(3, downloadButton('dwn_mk_hist_dp', "")),
+                                       column(5,
+                                              selectInput('dwn_mk_hist_dp_ext', label = NULL,
+                                                          choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                         'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                       )
+                                     )
                                      )
                             ),
                             fluidRow(
@@ -123,10 +147,26 @@ cytofCoreGUI <-function(){
                             fluidRow(uiOutput('dvance_cluster_ui')),
                             fluidRow(
                               column(8,
-                                     plotOutput("tSNE_plot1_clust", click = "plot_click")
+                                     plotOutput('scatter_plot_clust', click = "plot_click"),
+                                     fluidRow(
+                                       column(2, downloadButton('dwn_scatter_clust', "")),
+                                       column(4,
+                                              selectInput('dwn_scatter_clust_ext', label = NULL,
+                                                          choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                         'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                       )
+                                     )
                                      ),
                               column(4,
-                                     plotOutput('abundance_clust')
+                                     plotOutput('abundance_clust'),
+                                     fluidRow(
+                                       column(4, downloadButton('dwn_abundance_clust', "")),
+                                       column(7,
+                                              selectInput('dwn_abundance_clust_ext', label = NULL,
+                                                          choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                         'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                       )
+                                     )
                                      )
                             ),
                             fluidRow(
@@ -164,15 +204,39 @@ cytofCoreGUI <-function(){
                                  uiOutput('mk_deconvol_gene_expression_ui')
                           ),
                           column(6,
-                                 plotOutput("deconvol_expr")
+                                 plotOutput("deconvol_expr"),
+                                 fluidRow(
+                                   column(2, downloadButton('dwn_deconvol_expr', "")),
+                                   column(4,
+                                          selectInput('dwn_deconvol_expr_ext', label = NULL,
+                                                      choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                                     'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp"))
+                                   )
+                                 )
                           )
-                        )
+                        ),
+                        fluidRow(
+                          column(3, actionButton('drawn_cluster_hm_expr', label = "Drawing heatmap")),
+                          column(3, downloadButton('dwn_drawn_cluster_hm_expr', "")),
+                          column(3,
+                                 selectInput('dwn_drawn_cluster_hm_expr_ext', label = NULL,
+                                             choices = list("pdf" = 'pdf', "jpeg" = 'jpeg', 'png' = "png"))
+                          )
+                        ),
+                        fluidRow(plotOutput('cluster_hm_expr'))
                ),
                ################################################################### Tab 4
                tabPanel("Abundance correlation",
                         fluidRow(
                           column(6,
-                                 plotOutput("abun_cor_plot", click = "abun_cor_click")
+                                 plotOutput("abun_cor_plot", click = "abun_cor_click"),
+                                 fluidRow(
+                                   column(3, downloadButton('dwn_abund_corr', "")),
+                                   column(5,
+                                          selectInput('dwn_abund_corr_ext', label = NULL,
+                                                      choices = list("pdf" = 'pdf', "jpeg" = 'jpeg', 'png' = "png"))
+                                   )
+                                 )
                           ),
                           column(6,
                                  sliderInput('edges_threshold_abund_corr', "Edge weight threshold for graph",
@@ -198,6 +262,16 @@ cytofCoreGUI <-function(){
                           uiOutput("corr_analysis_settings_ui")
                         ),
                         fluidRow(
+                          fluidRow(
+                            column(2, downloadButton('dwn_gene_cor_acorr', "")),
+                            column(4,
+                                   selectInput('dwn_gene_cor_acorr_ext', label = NULL,
+                                               choices = list("chosen correlations" = 'focus_corr_data',
+                                                              "correlations within clusters" = 'signals_in_cluster',
+                                                              "correlations between clusters" = 'signals_between_clusters',
+                                                              "all correlations" = 'signals'))
+                            )
+                          ),
                           DT::dataTableOutput("gene_cor_table")
                         )
                ),
@@ -231,6 +305,16 @@ cytofCoreGUI <-function(){
                           uiOutput('mk_corr_analysis_settings_ui')
                         ),
                         fluidRow(
+                          fluidRow(
+                            column(2, downloadButton('dwn_marker_table_mk_corr', "")),
+                            column(4,
+                                   selectInput('dwn_marker_table_mk_corr_ext', label = NULL,
+                                               choices = list("chosen correlations" = 'focus_corr_data',
+                                                              "correlations within clusters" = 'signals_in_cluster',
+                                                              "correlations between clusters" = 'signals_between_clusters',
+                                                              "all correlations" = 'signals'))
+                            )
+                          ),
                           DT::dataTableOutput('marker_mk_corr_table')
                         )
 
