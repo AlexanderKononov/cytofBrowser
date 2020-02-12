@@ -19,6 +19,9 @@
 #' @importFrom corrplot corrplot
 #' @importFrom DT renderDataTable datatable
 #' @importFrom neo4r neo4j_api
+#' @importFrom ComplexHeatmap Heatmap
+#' @importFrom grid grid.grab grid.draw
+#' @importFrom gridGraphics grid.echo
 #'
 #' @examples
 cytofCore_server <- function(input, output){
@@ -31,6 +34,7 @@ cytofCore_server <- function(input, output){
 
   ##### Create "fcs_data" as reactive object to store the CyTOF data
   fcs_data <-reactiveValues()
+  plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$fcs_upload, {
     ## Get row data fcs files
@@ -77,16 +81,30 @@ cytofCore_server <- function(input, output){
   })
 
   ##### Drawing the reactive tSNE plot
-  output$tSNE_plot_data_preparation <- renderPlot({
+  output$scatter_plot_data_preparation <- renderPlot({
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- names(fcs_data$use_markers)[1]
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
-    ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
+    plots$scatter_dp <- ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
       geom_point(size = 0.2) +
       scale_color_gradient2(midpoint = 0.5, low = 'blue', mid = "white",  high = 'red') +
       labs(color = color_mk) +
       theme_bw()
+    return(plots$scatter_dp)
   })
+
+  ##### Download scatter plot data preparation
+  output$dwn_scatter_dp <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_scatter_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      paste("Scatter_plot_data_preparation", ext, sep = ".") },
+    content = function(file) {
+      ext <- input$dwn_scatter_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$scatter_dp, device = ext)
+    }
+  )
 
   ##### Create UI to choose target marker
   output$mk_target_data_preparation_ui <- renderUI({
@@ -154,18 +172,47 @@ cytofCore_server <- function(input, output){
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- "Marker was not choose"
     if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
-    ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
+    plots$mk_hist <- ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
+    return(plots$mk_hist)
   })
+
+  ##### Download plot of marker histogram data preparation
+  output$dwn_mk_hist_dp <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_mk_hist_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      print(paste("Marker_histogram_plot_data_preparation", ext, sep = "."))
+      return(paste("Marker_histogram_plot_data_preparation", ext, sep = ".")) },
+    content = function(file) {
+      ext <- input$dwn_mk_hist_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$smpl_hist, device = ext)
+    }
+  )
 
   ##### Drawing the reactive plot of cell number
   output$smpl_hist_preparation <- renderPlot({
     if(is.null(fcs_data$cell_number)){return(NULL)}
-    ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_nmbr))+
+    plots$smpl_hist <- ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_nmbr))+
       geom_bar(stat="identity") +
       coord_flip()
+    return(plots$smpl_hist)
   })
+
+  ##### Download plot of cell number data preparation
+  output$dwn_smpl_hist_dp <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_smpl_hist_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      paste("Cell_number_plot_data_preparation", ext, sep = ".") },
+    content = function(file) {
+      ext <- input$dwn_smpl_hist_dp_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$smpl_hist, device = ext)
+    }
+  )
 
   ########################
   ###  Clusterisation  ###
@@ -315,7 +362,7 @@ cytofCore_server <- function(input, output){
   })
 
   ##### Drawing the reactive and interactive UMAP plot
-  output$tSNE_plot1_clust <- renderPlot({
+  output$scatter_plot_clust <- renderPlot({
     if(is.null(clusterisation$umap_df)){return(NULL)}
     focus_node <- input$current_node_id
     plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
@@ -323,19 +370,47 @@ cytofCore_server <- function(input, output){
     if(input$mk_target_clusterisation != 'cluster'){
       plt <- plt + scale_color_gradient2(midpoint=0.5, low='blue', mid='white', high='red')
     }
-    plt + geom_point(data = clusterisation$umap_df[clusterisation$umap_df$cluster == focus_node,], colour = 'black', size = 1)+
+    plt <- plt + geom_point(data = clusterisation$umap_df[clusterisation$umap_df$cluster == focus_node,], colour = 'black', size = 1)+
       labs(color = input$mk_target_clusterisation)+
       theme_bw()
+    plots$scatter_clust <- plt
+    return(plt)
   })
+
+  ##### Download scatter plot for clustering
+  output$dwn_scatter_clust <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_scatter_clust_ext
+      if(is.null(ext)){ext <- "pdf"}
+      paste("Scatter_plot_clustering", ext, sep = ".") },
+    content = function(file) {
+      ext <- input$dwn_scatter_clust_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$scatter_clust, device = ext)
+    }
+  )
 
   ##### Drawing the reactive abundance plot
   output$abundance_clust <- renderPlot({
     if(is.null(clusterisation$umap_df)){return(NULL)}
-    plt <- ggplot(clusterisation$abundance_df, aes(x = sample_ids, y = abundance, fill = cluster)) +
+    plots$abundance_clust <- ggplot(clusterisation$abundance_df, aes(x = sample_ids, y = abundance, fill = cluster)) +
       geom_bar(stat = 'identity') +
       theme(axis.text.x = element_text(angle = 90))
-    return(plt)
+    return(plots$abundance_clust)
   })
+
+  ##### Download abundance plot for clustering
+  output$dwn_abundance_clust <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_abundance_clust_ext
+      if(is.null(ext)){ext <- "pdf"}
+      paste("Abundance_plot_clustering", ext, sep = ".") },
+    content = function(file) {
+      ext <- input$dwn_abundance_clust_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$abundance_clust, device = ext)
+    }
+  )
 
   ##### Drawing the reactive and interactive graph with clusters
   output$network <- renderVisNetwork({
@@ -394,7 +469,7 @@ cytofCore_server <- function(input, output){
   output$cluster_heatmap <- renderD3heatmap({
     if(is.null(gene_expression$cluster_expr_median)){return(NULL)}
     d3heatmap(gene_expression$cluster_expr_median,
-              Rowv = NA,
+              #Rowv = NA,
               col = RColorBrewer::brewer.pal(9,"Reds")
               #scale="none"
               #RowSideColors=country_colours,
@@ -416,14 +491,68 @@ cytofCore_server <- function(input, output){
   output$deconvol_expr <- renderPlot({
     if(is.null(gene_expression$deconvol_expr_median)){return(NULL)}
     if(is.null(input$mk_deconvol_gene_expression)){return(NULL)}
-    ggplot(data = gene_expression$deconvol_expr_median,
+    plots$deconvol_expr <- ggplot(data = gene_expression$deconvol_expr_median,
            aes(x=sample_ids, y=cell_clustering, fill= eval(parse(text = input$mk_deconvol_gene_expression)))) +
       geom_tile() +
       theme_light() +
       labs(fill = input$mk_deconvol_gene_expression) +
       geom_text(aes(label = round(cell_rate, 3)), size = 5, color = 'white') +
       theme(axis.text.x = element_text(angle = 90))
+    return(plots$deconvol_expr)
   })
+
+  ##### Download deconvolution plot of marker for marker expression
+  output$dwn_deconvol_expr <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_deconvol_expr_ext
+      mk <- input$mk_deconvol_gene_expression
+      if(is.null(ext)){ext <- "pdf"}
+      if(is.null(mk)){mk <- ""}
+      paste0("Deconvolution_plot_clustering_", mk, ".", ext) },
+    content = function(file) {
+      ext <- input$dwn_deconvol_expr_ext
+      if(is.null(ext)){ext <- "pdf"}
+      ggsave(file, plot = plots$deconvol_expr, device = ext)
+    }
+  )
+
+  observeEvent(input$drawn_cluster_hm_expr, {
+    if(is.null(gene_expression$cluster_expr_median)){return(NULL)}
+    plots$cluster_hm_expr <- ComplexHeatmap::Heatmap(as.matrix(gene_expression$cluster_expr_median),
+                                                     col = RColorBrewer::brewer.pal(9,"Reds"),
+                                                     heatmap_legend_param = list(title = "expression"))
+  })
+
+  ##### Drawing expression heatmap of markers per clusters
+  output$cluster_hm_expr <- renderPlot({plots$cluster_hm_expr})
+
+  ##### Download heatmap expression plot marker expressions
+  output$dwn_drawn_cluster_hm_expr <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_drawn_cluster_hm_expr_ext
+      if(is.null(ext)){ext <- "pdf"}
+      return(paste("Clusters_hm_expression", ext, sep = ".")) },
+    content = function(file) {
+      ext <- input$dwn_drawn_cluster_hm_expr_ext
+      if(is.null(ext)){ext <- "pdf"}
+      if(ext == "pdf"){
+        pdf(file)
+        ComplexHeatmap::draw(plots$cluster_hm_expr)
+        dev.off()
+      }
+      if(ext == "jpeg"){
+        jpeg(file)
+        ComplexHeatmap::draw(plots$cluster_hm_expr)
+        dev.off()
+      }
+      if(ext == "png"){
+        png(file)
+        ComplexHeatmap::draw(plots$cluster_hm_expr)
+        dev.off()
+      }
+      #ggsave(file, plot = plots$cluster_hm_expr, device = ext)
+    }
+  )
 
   ########################
   ####  Correlation   ####
@@ -455,7 +584,38 @@ cytofCore_server <- function(input, output){
              insig = "label_sig",
              sig.level = c(.001, .01, .05), pch.cex = 1.2, pch.col = "white"
     )
+    gridGraphics::grid.echo()
+    plots$abun_corr <- grid::grid.grab()
+    return(plots$abun_corr)
   })
+
+  ##### Download abundance correlation plot
+  output$dwn_abund_corr <- downloadHandler(
+    filename = function() {
+      ext <- input$dwn_abund_corr_ext
+      if(is.null(ext)){ext <- "pdf"}
+      paste("Abunadnce_correlations", ext, sep = ".") },
+    content = function(file) {
+      ext <- input$dwn_abund_corr_ext
+      if(is.null(ext)){ext <- "pdf"}
+      if(ext == "pdf"){
+        pdf(file)
+        grid::grid.draw(plots$abun_corr)
+        dev.off()
+      }
+      if(ext == "jpeg"){
+        jpeg(file)
+        grid::grid.draw(plots$abun_corr)
+        dev.off()
+      }
+      if(ext == "png"){
+        png(file)
+        grid::grid.draw(plots$abun_corr)
+        dev.off()
+      }
+      #ggsave(file, plot = plots$abun_corr, device = ext)
+    }
+  )
 
   ##### UI for correlation analysis settings
   corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
@@ -578,8 +738,24 @@ cytofCore_server <- function(input, output){
       focus_corr_data <- signals_in_cluster_top[signals_in_cluster_top$cluster == focus_corr()[[1]],]
       if (nrow(focus_corr_data) < 2) {focus_corr_data <- signals_in_cluster[signals_in_cluster$cluster == focus_corr()[[1]],]}
     }
+    correlation$focus_corr_data <- focus_corr_data
     return(focus_corr_data)
   }))
+
+  ##### Download abundance corelation table
+  output$dwn_gene_cor_acorr <- downloadHandler(
+    filename = function() {paste0("abund_", input$dwn_gene_cor_acorr_ext, ".csv")},
+    content = function(file) {
+      mode <- input$dwn_gene_cor_acorr_ext
+      if(is.null(mode)){mode <- 'signals'}
+      if(mode == 'signals_in_cluster'){write.csv(correlation$signals_in_cluster, file)}
+      if(mode == 'signals_between_clusters'){write.csv(correlation$signals_between_clusters, file)}
+      if(mode == 'signals'){write.csv(correlation$signals, file)}
+      if(mode == 'focus_corr_data'){
+        if(is.null(correlation$focus_corr_data)){return(NULL)}
+        write.csv(correlation$focus_corr_data, file)}
+    }
+  )
 
   ########################
   ## Marker correlation ##
@@ -630,6 +806,7 @@ cytofCore_server <- function(input, output){
 
   observeEvent(input$mk_corr_analysis, {
     options(warn=-1)
+    print("Correlation analysis started...")
     correlation$list_expData <- get_list_expData(fcs_data$fcs_raw)
     correlation$list_tt_expData <- tt_sample_aggregator(correlation$list_cell_ctDist, correlation$list_expData)
     ##### Background contrast computing
@@ -674,6 +851,7 @@ cytofCore_server <- function(input, output){
       match(correlation$signal_between_cluster_mk$signaling_marker, fcs_data$use_markers)])
     correlation$signal_between_cluster_mk$target_marker <- names(fcs_data$use_markers[
       match(correlation$signal_between_cluster_mk$target_marker, fcs_data$use_markers)])
+    print("... Correlation analysis finished")
   })
 
   ##### Drawing the reactive and interactive graph network_mk with clusters for navigation in marker correlation
@@ -714,8 +892,24 @@ cytofCore_server <- function(input, output){
     if(length(focus_mk_corr()[[1]])==1){
       focus_mk_corr_data <- correlation$signal_in_cluster_mk[correlation$signal_in_cluster_mk$cluster == focus_mk_corr()[[1]],]
     }
+    correlation$focus_mk_corr_data <- focus_mk_corr_data
     return(focus_mk_corr_data)
   }))
+
+  ##### Download marker corelation table
+  output$dwn_marker_table_mk_corr <- downloadHandler(
+    filename = function() {paste0("mk_",input$dwn_marker_table_mk_corr_ext, ".csv")},
+    content = function(file) {
+      mode <- input$dwn_marker_table_mk_corr_ext
+      if(is.null(mode)){mode <- 'signals'}
+      if(mode == 'signals_in_cluster'){write.csv(correlation$signal_in_cluster_mk, file)}
+      if(mode == 'signals_between_clusters'){write.csv(correlation$signal_between_cluster_mk, file)}
+      if(mode == 'signals'){write.csv(correlation$signals_mk, file)}
+      if(mode == 'focus_corr_data'){
+        if(is.null(correlation$focus_mk_corr_data)){return(NULL)}
+        write.csv(correlation$focus_mk_corr_data, file)}
+    }
+  )
 
 
   ########################
