@@ -416,6 +416,9 @@ cytofCore_server <- function(input, output){
     focus_node <- input$current_node_id
     plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
       geom_point(size = 0.8)
+    if(input$mk_target_clusterisation == 'cluster'){
+      plt <- plt + scale_color_manual(values = as.character(clusterisation$nodes$color))
+    }
     if(input$mk_target_clusterisation != 'cluster'){
       plt <- plt + scale_color_gradient2(midpoint=0.5, low='blue', mid='white', high='red')
     }
@@ -444,6 +447,7 @@ cytofCore_server <- function(input, output){
     if(is.null(clusterisation$umap_df)){return(NULL)}
     plots$abundance_clust <- ggplot(clusterisation$abundance_df, aes(x = sample_ids, y = abundance, fill = cluster)) +
       geom_bar(stat = 'identity') +
+      scale_fill_manual(values = as.character(clusterisation$nodes$color)) +
       theme(axis.text.x = element_text(angle = 90))
     return(plots$abundance_clust)
   })

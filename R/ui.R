@@ -325,4 +325,3 @@ cytofCoreGUI <-function(){
 
   shinyApp(ui = cytofCore_ui, server = cytofCore_server)
 }
-

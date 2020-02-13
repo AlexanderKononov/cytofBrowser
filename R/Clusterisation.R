@@ -185,15 +185,18 @@ filter_edges <- function(edges, threshold){
 #'
 #' @examples
 get_nodes <- function(edges, cell_clustering){
+  pal_order <- c("Dark2", "Set1", "Set2", "Paired", "Accent", "Set3", "Pastel1", "Pastel2")
   qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
-  cluster_colour <- sample(unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors,
-                                         rownames(qual_col_pals))), length(unique(cell_clustering)))
-  nodes <- data.frame(id = unique(c(edges$to, edges$from)),
+  cluster_colour <- as.character(unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals[pal_order, 'maxcolors'],
+                                         pal_order))[1:length(unique(cell_clustering))])
+  id <- unique(c(edges$to, edges$from))
+  id <- id[order(id)]
+  nodes <- data.frame(id = id,
                       color = cluster_colour,
-                      label = unique(c(edges$to, edges$from)),
-                      value = as.numeric(log(table(cell_clustering))),
-                      title = paste0("Cluster ",  unique(c(edges$to, edges$from)),
-                                     "<br>number of cells: ", table(cell_clustering)))
+                      label = id,
+                      value = as.numeric(log(table(cell_clustering)[id])),
+                      title = paste0("Cluster ",  id,
+                                     "<br>number of cells: ", table(cell_clustering)[id]))
   return(nodes)
 }
 
