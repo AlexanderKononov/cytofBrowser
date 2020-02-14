@@ -210,8 +210,8 @@ get_cell_number <- function(fcs_raw){
 #' @importFrom umap umap
 #'
 #' @examples
-sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE",
-                         perplexity = 30, theta = 0.5, max_iter = 1000){
+scatter_plot_data_prep <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tSNE",
+                         perplexity = 30, theta = 0.5, max_iter = 1000, size_fuse = 5000){
   #sampling_size <- as.integer(sampling_size/length(fcs_raw))
   expr <- flowCore::fsApply(fcs_raw[,use_markers], flowCore::exprs)
   sample_ids <- rep(flowCore::sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
@@ -225,7 +225,10 @@ sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tS
   ## How many cells to downsample per-sample
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)             ################ Number of cells to ploting
   tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
+  print(tsne_ncells)
+  if(!is.null(size_fuse) & (sum(tsne_ncells) > size_fuse)){tsne_ncells <- as.integer((tsne_ncells*size_fuse)/sum(tsne_ncells))}
   names(tsne_ncells) <- names(table(sample_ids))
+  print(tsne_ncells)
 
   ## Get subsampled indices
   set.seed(1234)
@@ -233,6 +236,7 @@ sampled_tSNE <- function(fcs_raw, use_markers, sampling_size = 0.5, method = "tS
     s <- sample(inds[[i]], tsne_ncells[i], replace = FALSE)
     intersect(s, dups)
   })
+
   tsne_inds <- unlist(tsne_inds)
   tsne_expr <- expr[tsne_inds, use_markers]
 

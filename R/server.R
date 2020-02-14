@@ -65,9 +65,9 @@ cytofCore_server <- function(input, output){
       method <- "tSNE"
       if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
-      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+      fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
                                     perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
       incProgress(1, detail = "Extraction fcs cluster info")
       if('extract_cluster_info' %in% isolate(input$transformation_list)){
         withProgress(message = "Clusters from fcs files", min =0, max = 7, value = 0,{
@@ -180,9 +180,9 @@ cytofCore_server <- function(input, output){
       if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
       incProgress(3)
-      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+      fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
                                     perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
       incProgress(4)
     })
   })
@@ -199,9 +199,9 @@ cytofCore_server <- function(input, output){
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
       fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
       incProgress(3, detail = "Excluding")
-      fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+      fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
                                     perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
       incProgress(4, detail = "Redrawing")
     })
   })
