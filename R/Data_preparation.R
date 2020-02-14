@@ -67,12 +67,15 @@ get_fcs_raw <- function(md){
 #'
 #' @examples
 get_fcs_panel <- function(fcs_raw){
-  tech_patterns <-list(computational_tech = c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE", "BCKG"),
-                       marker_tech = c("_BC", "BCKG", "DNA", "Cisplatin"))
+  tech_patterns <-list(computational_tech = c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE", "<NA>"),
+                       marker_tech = c("_BC", "BCKG", "DNA"))
   panel <- as.data.frame(flowCore::pData(flowCore::parameters(fcs_raw[[1]]))[,c("name", "desc")])
   rownames(panel) <- NULL
   panel <- panel[sapply(panel$name, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
+  panel <- panel[sapply(panel$desc, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
+  panel <- panel[!is.na(panel$desc),]
   panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) x[length(x)])
+  panel$antigen <- gsub(" \\(v)", "", panel$antigen)
   panel$marker_class <- "type"
   panel$marker_class[sapply(panel$desc, function(x) any(sapply(tech_patterns$marker_tech, function(y) grepl(y,x))))] <- "state"
   panel <- as.data.frame(apply(panel, c(1,2), function(x) gsub(" ", "_", x)))
@@ -126,9 +129,12 @@ upload_fcs_data <- function(fcs_files){
 #' @importFrom flowCore fsApply exprs "exprs<-"
 #'
 #' @examples
-asinh_transformation <- function(fcs_raw, cofactor){
-  computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
-  markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
+asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
+  if(is.null(use_marker)){
+    computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
+    markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
+  }
+  markers <- use_marker
   fcs_asinh <- flowCore::fsApply(fcs_raw, function(x, cf = cofactor, mk = markers){
     exprs(x)[,mk] <- asinh(exprs(x)[,mk] / cf)
     return(x)})
@@ -151,9 +157,12 @@ asinh_transformation <- function(fcs_raw, cofactor){
 #' @importFrom matrixStats colQuantiles
 #'
 #' @examples
-outlier_by_quantile_transformation <- function(fcs_raw, quantile){
-  computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
-  markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
+outlier_by_quantile_transformation <- function(fcs_raw, quantile = quantile, use_marker = NULL){
+  if(is.null(use_marker)){
+    computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
+    markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
+  }
+  markers <- use_marker
   fcs_outlier_by_quantile <- flowCore::fsApply(fcs_raw, function(x, ql = quantile, mk = markers){
     rng <- matrixStats::colQuantiles(exprs(x)[,mk], probs = c(ql, 1-ql))
     expr_data <- t((t(exprs(x)[,mk]) - rng[, 1]) / (rng[, 2] - rng[, 1]))

@@ -23,7 +23,8 @@ cytofCoreGUI <-function(){
                           sidebarPanel(
                             shinyFilesButton('fcs_files', label='Select fcs files', title='Please select fcs files', multiple=TRUE),
                             checkboxGroupInput("transformation_list", label = h4("Transformations"),
-                                               choices = list("asinh" = "asinh", "outlier by quartile" = "outlier_by_quantile"),
+                                               choices = list("asinh" = 'asinh', "outlier by quartile" = 'outlier_by_quantile',
+                                                              "extract cluster info" = 'extract_cluster_info'),
                                                selected = c("asinh", "outlier_by_quantile")),
                             conditionalPanel(
                               condition = "input.transformation_list.includes('asinh')",

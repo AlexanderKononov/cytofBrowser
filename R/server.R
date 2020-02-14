@@ -37,7 +37,7 @@ cytofCore_server <- function(input, output){
   plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$fcs_upload, {
-    withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
+    withProgress(message = "Extraction data", min =0, max = 8, value = 0,{
       ## Get row data fcs files
       fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
       incProgress(1, detail = "Upload data" )
@@ -51,10 +51,10 @@ cytofCore_server <- function(input, output){
       incProgress(1, detail = "Transformation" )
       ## Transform row data to scaled data by set parameters
       if('asinh' %in% input$transformation_list){
-        fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, input$cofactor)
+        fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, cofactor = input$cofactor, use_marker = fcs_data$use_markers)
       }
       if('outlier_by_quantile' %in% isolate(input$transformation_list)){
-        fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, input$quantile)
+        fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, quantile = input$quantile, use_marker = fcs_data$use_markers)
       }
       incProgress(1, detail = "Plotting" )
       ## Preparing data for scatterplot
@@ -68,6 +68,38 @@ cytofCore_server <- function(input, output){
       fcs_data$tSNE <- sampled_tSNE(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
                                     perplexity = data_prep_settings$perplexity,
                                     theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter)
+      incProgress(1, detail = "Extraction fcs cluster info")
+      if('extract_cluster_info' %in% isolate(input$transformation_list)){
+        withProgress(message = "Clusters from fcs files", min =0, max = 7, value = 0,{
+          clusterisation$cell_clustering_list <- get_fcs_cluster_annotation(fcs_data$fcs_raw, pattern = "clust")
+          incProgress(1, detail = "forming cluster lists")
+          clusterisation$cell_clustering <- get_fcs_cell_clustering_list(clusterisation$cell_clustering_list)
+          incProgress(1, detail = "distance between clusters")
+          clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
+          incProgress(1, detail = "graph elements")
+          ## Calculation of edges and nodes for graph
+          clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
+          clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
+          incProgress(1, detail = "drawing scatter plot")
+          ## Create a data frame to UMAP or tSNE plotting
+          if(!is.null(input$cluster_perplexity)){cluster_settings$perplexity <- input$cluster_perplexity}
+          if(!is.null(input$cluster_theta)){cluster_settings$theta <- input$cluster_theta}
+          if(!is.null(input$cluster_max_iter)){cluster_settings$max_iter <- input$cluster_max_iter}
+          sampling_size_clust <- 0.5
+          method_clust <- "UMAP"
+          if(!is.null(input$n_cell_plot_clasterisation)){sampling_size_clust <- as.numeric(input$n_cell_plot_clasterisation)}
+          if(!is.null(input$method_plot_clasterisation)){method_clust <- input$method_plot_clasterisation}
+          tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size_clust)
+          clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
+                                                       clust_markers = fcs_data$use_markers, tsne_inds = tsne_inds,
+                                                       cell_clustering = clusterisation$cell_clustering, method = method_clust,
+                                                       perplexity = cluster_settings$perplexity,
+                                                       theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
+          incProgress(1, detail = "drawing abundance plot")
+          clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
+                                                                 cell_clustering = clusterisation$cell_clustering)
+        })
+      }
       incProgress(1)
     })
   })

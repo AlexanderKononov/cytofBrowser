@@ -10,10 +10,10 @@
 #' @importFrom FlowSOM BuildSOM
 #'
 #' @examples
-get_som <- function(fcs_raw, use_markers){
+get_som <- function(fcs_raw, clust_markers){
   fsom <- FlowSOM::ReadInput(fcs_raw, transform = FALSE, scale = FALSE)
   set.seed(1234)
-  som <- FlowSOM::BuildSOM(fsom, colsToUse = use_markers)
+  som <- FlowSOM::BuildSOM(fsom, colsToUse = clust_markers)
   return(som)
 
 }
@@ -238,17 +238,20 @@ get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
 #' @examples
 get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, cell_clustering, method = "UMAP",
                                perplexity = 30, theta = 0.5, max_iter = 1000){
-  expr <- flowCore::fsApply(fcs_raw[,use_markers], flowCore::exprs)
-  tsne_expr <- expr[tsne_inds, clust_markers]
+  expr_list <- flowCore::fsApply(fcs_raw, function(x){
+    tmp <- flowCore::exprs(x)
+    return(tmp[,use_markers])
+  })
+  tsne_expr <- expr_list[tsne_inds, clust_markers]
   if(method == "UMAP"){
     umap_out <- umap::umap(tsne_expr)
-    umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$layout, cluster =  as.factor(cell_clustering)[tsne_inds])
+    umap_df <- data.frame(expr_list[tsne_inds, use_markers], umap_out$layout, cluster =  as.factor(cell_clustering)[tsne_inds])
   }
   if(method == "tSNE"){
     set.seed(1234)
     umap_out <- Rtsne::Rtsne(tsne_expr, check_duplicates = FALSE, pca = FALSE,
                       perplexity = perplexity, theta = theta, max_iter = max_iter)
-    umap_df <- data.frame(expr[tsne_inds, use_markers], umap_out$Y, cluster =  as.factor(cell_clustering)[tsne_inds])
+    umap_df <- data.frame(expr_list[tsne_inds, use_markers], umap_out$Y, cluster =  as.factor(cell_clustering)[tsne_inds])
   }
   colnames(umap_df) <- c(names(use_markers), "UMAP_1", "UMAP_2", "cluster")
   return(umap_df)
@@ -287,5 +290,38 @@ cluster_merging <- function(clusters, cluster_to_merge){
   new_clusters <- clusters
   new_clusters[clusters %in% cluster_to_merge] <- cluster_to_merge[1]
   return(new_clusters)
+}
+
+##### Create the cluster annotation separated by samples from fcs files by specific coloumn
+#' Create the cluster annotation separated by samples from fcs files by specific coloumn
+#'
+#' @param fcs_raw
+#' @param pattern name or part of colomn name with cluster information. For cytofkit2 output it is "FlowSOM_clusterIDs"
+#'
+#' @return
+#' @importFrom flowCore fsApply sampleNames "sampleNames<-" pData "pData<-" parameters "parameters<-" exprs "exprs<-"
+#' @importClassesFrom flowCore flowSet
+#'
+#' @examples
+get_fcs_cluster_annotation <- function(fcs_raw, pattern = "clust"){
+  cluster_info_col <- flowCore::pData(flowCore::parameters(fcs_raw[[1]]))$name[grepl(pattern, flowCore::pData(flowCore::parameters(fcs_raw[[1]]))$name)]
+  cell_clustering_list <- lapply(1:length(fcs_raw), function(x){
+    fcs_raw[[x]]@exprs[,cluster_info_col]
+  })
+  names(cell_clustering_list) <- flowCore::sampleNames(fcs_raw)
+  return(cell_clustering_list)
+}
+
+#### Create the cluster annotation as one vector for cluster info extraction from fcs file
+#' Create the cluster annotation as one vector for cluster info extraction from fcs file
+#'
+#' @param cell_clustering_list
+#'
+#' @return
+#'
+#' @examples
+get_fcs_cell_clustering_list <- function(cell_clustering_list){
+  cell_clustering <- unlist(cell_clustering_list)
+  return(cell_clustering)
 }
 

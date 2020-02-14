@@ -4,7 +4,7 @@
 \alias{get_som}
 \title{Get som object from flowSOM}
 \usage{
-get_som(fcs_raw, use_markers)
+get_som(fcs_raw, clust_markers)
 }
 \arguments{
 \item{use_markers}{}
