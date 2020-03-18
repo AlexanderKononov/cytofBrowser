@@ -1,10 +1,10 @@
 
 #' The main function to run cutofCore graphic interface
-#' @description Run graphical user interface for cytofanalyzer.
+#' @description Run graphical user interface for cytofBrowser.
 #' The function runs the Shiny App in browser. The current package
 #' was created with assumption that it will be run with GUI mode
 #' as Shiny App, That is why the function is the most appropriate
-#' way to use the cytofanalyzer.
+#' way to use the cytofBrowser.
 #'
 #' @return The function runs the Shiny App in browser.
 #' @import shiny shinyFiles visNetwork d3heatmap shinydashboard shinyWidgets
@@ -12,10 +12,10 @@
 #'
 #' @examples
 #' \dontrun{
-#' cytofCoreGUI()
+#' cytofBrowserGUI()
 #' }
-cytofCoreGUI <-function(){
-  cytofCore_ui <- dashboardPage(
+cytofBrowserGUI <-function(){
+  cytofBrowser_ui <- dashboardPage(
     dashboardHeader(title = "cytofBrowser"),
     dashboardSidebar(
       sidebarMenu(
@@ -285,5 +285,5 @@ cytofCoreGUI <-function(){
     )
   )
 
-  shinyApp(ui = cytofCore_ui, server = cytofCore_server)
+  shinyApp(ui = cytofBrowser_ui, server = cytofBrowser_server)
 }

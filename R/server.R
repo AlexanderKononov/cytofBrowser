@@ -24,7 +24,7 @@
 #' @importFrom gridGraphics grid.echo
 #'
 #' @examples
-cytofCore_server <- function(input, output){
+cytofBrowser_server <- function(input, output){
 
   ########################
   ###       iBox       ###
