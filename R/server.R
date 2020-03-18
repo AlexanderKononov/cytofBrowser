@@ -24,7 +24,66 @@
 #' @importFrom gridGraphics grid.echo
 #'
 #' @examples
-cytofCore_server <- function(input, output){
+cytofBrowser_server <- function(input, output){
+
+  ########################
+  ###       iBox       ###
+  ########################
+  output$iBox_upload_dproc <- renderInfoBox({
+    if(is.null(fcs_data$md)){
+      return(infoBox("Data uploading", "0 files", icon = icon("arrow-alt-circle-up"), color = "red"))
+    }
+    if(!is.null(fcs_data$md)){
+      return(infoBox("Data uploading", paste0(length(fcs_data$md$file_name), " files"), icon = icon("check"), color = "green", fill = T))
+    }
+  })
+
+  output$iBox_preproc_dproc <- renderInfoBox({
+    if(is.null(fcs_data$panel) | is.null(fcs_data$use_markers)){
+      return(infoBox("Markers", "No panel", icon = icon("align-center"), color = "red"))
+    }
+    excluded_mk <- get_use_marker(fcs_data$panel)
+    excluded_mk <- excluded_mk[!(excluded_mk %in% fcs_data$use_markers)]
+    if(length(excluded_mk) == 0){
+      return(infoBox("Markers", paste0(length(fcs_data$panel$name), " in panel"),
+                     paste0(length(fcs_data$use_markers), " in use"),  icon = icon("align-right"), color = "yellow"))
+    }
+    if(length(excluded_mk) != 0){
+      return(infoBox("Markers", paste0(length(fcs_data$panel$name), " in panel"),
+                     paste0(length(fcs_data$use_markers), " in use, ", length(excluded_mk), " excluded"),
+                     icon = icon("check"), color = "green", fill = T))
+    }
+  })
+
+  output$iBox_clust_dproc <- renderInfoBox({
+    if(is.null(clusterisation$cell_clustering)){
+      return(infoBox("Clustering", "No clusters", icon = icon("spinner"), color = "red"))
+    }
+    if(!is.null(clusterisation$cell_clustering)){
+      return(infoBox("Data uploading", paste0(length(unique(clusterisation$cell_clustering)), " clusters"),
+                     icon = icon("check"), color = "green", fill = T))
+    }
+  })
+
+  output$iBox_abund_corr <- renderInfoBox({
+    if(is.null(correlation$signals_between_clusters) & is.null(correlation$signals_in_cluster)){
+      return(infoBox("Abundance correlation analysis", "not done", icon = icon("window-close"), color = "red"))
+    }
+    if(!is.null(fcs_data$md)){
+      return(infoBox("Abundance correlation analysis", paste0(ncol(correlation$signals_between_clusters)+
+                                                                ncol(correlation$signals_in_cluster), " signals"), icon = icon("check"), color = "green", fill = T))
+    }
+  })
+
+  output$iBox_mk_corr <- renderInfoBox({
+    if(is.null(correlation$signal_between_cluster_mk) & is.null(correlation$signal_in_cluster_mk)){
+      return(infoBox("Marker correlation analysis", "not done", icon = icon("window-close"), color = "red"))
+    }
+    if(!is.null(fcs_data$md)){
+      return(infoBox("Marker correlation analysis", paste0(ncol(correlation$signal_between_cluster_mk)+
+                                                                ncol(correlation$signal_in_cluster_mk), " signals"), icon = icon("check"), color = "green", fill = T))
+    }
+  })
 
   ########################
   ### Data preparation ###
@@ -36,8 +95,8 @@ cytofCore_server <- function(input, output){
   fcs_data <-reactiveValues()
   plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
-  observeEvent(input$fcs_upload, {
-    withProgress(message = "Extraction data", min =0, max = 8, value = 0,{
+  observeEvent(input$butt_upload_dproc, {
+    withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
       ## Get row data fcs files
       fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$fcs_files)$datapath)
       incProgress(1, detail = "Upload data" )
@@ -48,14 +107,6 @@ cytofCore_server <- function(input, output){
       fcs_data$use_markers <- get_use_marker(fcs_data$panel)
       incProgress(1, detail = "Cell number calculation" )
       fcs_data$cell_number <- get_cell_number(fcs_data$fcs_raw)
-      incProgress(1, detail = "Transformation" )
-      ## Transform row data to scaled data by set parameters
-      if('asinh' %in% input$transformation_list){
-        fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, cofactor = input$cofactor, use_marker = fcs_data$use_markers)
-      }
-      if('outlier_by_quantile' %in% isolate(input$transformation_list)){
-        fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, quantile = input$quantile, use_marker = fcs_data$use_markers)
-      }
       incProgress(1, detail = "Plotting" )
       ## Preparing data for scatterplot
       if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
@@ -69,9 +120,11 @@ cytofCore_server <- function(input, output){
                                     perplexity = data_prep_settings$perplexity,
                                     theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
       incProgress(1, detail = "Extraction fcs cluster info")
-      if('extract_cluster_info' %in% isolate(input$transformation_list)){
+      if(input$extr_clust_dproc){
         withProgress(message = "Clusters from fcs files", min =0, max = 7, value = 0,{
-          clusterisation$cell_clustering_list <- get_fcs_cluster_annotation(fcs_data$fcs_raw, pattern = "clust")
+          pattern <- "clust"
+          if(!is.null(input$extr_clust_pattern_dproc)){pattern <- input$extr_clust_pattern_dproc}
+          clusterisation$cell_clustering_list <- get_fcs_cluster_annotation(fcs_data$fcs_raw, pattern = pattern)
           incProgress(1, detail = "forming cluster lists")
           clusterisation$cell_clustering <- get_fcs_cell_clustering_list(clusterisation$cell_clustering_list)
           incProgress(1, detail = "distance between clusters")
@@ -104,31 +157,44 @@ cytofCore_server <- function(input, output){
     })
   })
 
-  #### Create UI to simple panele
-  observeEvent(input$draw_simple_data_prep, {
-    output$dvance_data_prep_ui <- NULL
-  })
-
-  #### Create UI to advice panele
-  observeEvent(input$draw_advance_data_prep, {
-    output$dvance_data_prep_ui <- renderUI({
-      fluidRow(
-        h4("Options to tSNE plotting"),
-        column(3, numericInput("data_prep_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
-        column(3, numericInput("data_prep_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
-        column(3, numericInput("data_prep_max_iter", "Iterations", value = 1000, step = 500))
-      )
+  #### reaction to button "Transform" in "Data processing" section: transformation fsc_data
+  observeEvent(input$butt_trans_dproc, {
+    if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    ## Transform row data to scaled data by set parameters
+    withProgress(message = "Transformation", min =0, max = 4, value = 0,{
+      incProgress(1, detail = "Transformation" )
+      if('asinh' %in% input$transformation_list){
+        fcs_data$fcs_raw <- asinh_transformation(fcs_data$fcs_raw, cofactor = input$cofactor, use_marker = fcs_data$use_markers)
+      }
+      incProgress(1, detail = "Outlier detection" )
+      if('outlier_by_quantile' %in% isolate(input$transformation_list)){
+        fcs_data$fcs_raw <- outlier_by_quantile_transformation(fcs_data$fcs_raw, quantile = input$quantile, use_marker = fcs_data$use_markers)
+      }
+      incProgress(1, detail = "Plotting" )
+      ## Preparing data for scatterplot
+      if(!is.null(input$data_prep_perplexity)){data_prep_settings$perplexity <- input$data_prep_perplexity}
+      if(!is.null(input$data_prep_theta)){data_prep_settings$theta <- input$data_prep_theta}
+      if(!is.null(input$data_prep_max_iter)){data_prep_settings$max_iter <- input$data_prep_max_iter}
+      sampling_size <- 0.5
+      method <- "tSNE"
+      if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
+      if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
+      fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
+                                              perplexity = data_prep_settings$perplexity,
+                                              theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
+      incProgress(1)
     })
   })
+
 
   ##### Drawing the reactive tSNE plot
   output$scatter_plot_data_preparation <- renderPlot({
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- names(fcs_data$use_markers)[1]
-    if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
+    if(!is.null(input$mk_scatter_dp)){color_mk <- input$mk_scatter_dp}
     plots$scatter_dp <- ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
       geom_point(size = 0.2) +
-      scale_color_gradient2(midpoint = 0.5, low = 'blue', mid = "white",  high = 'red') +
+      scale_color_gradient2(midpoint = 0.5, low = 'blue', mid = "gray",  high = 'red') +
       labs(color = color_mk) +
       theme_bw()
     return(plots$scatter_dp)
@@ -148,23 +214,26 @@ cytofCore_server <- function(input, output){
   )
 
   ##### Create UI to choose target marker
-  output$mk_target_data_preparation_ui <- renderUI({
+  output$mk_scatter_dp_ui <- renderUI({
     if(is.null(fcs_data$use_markers)){ return(NULL)}
-    selectInput("mk_data_preparation", label = h4("Plotted marker"),
+    selectInput('mk_scatter_dp', label = h4("Plotted marker"),
                 choices = names(fcs_data$use_markers),
                 #choices = c(1,2,3),
                 selected = 1)
   })
 
   ##### Create UI to choose excluded markers
-  output$mk_subset_data_preparation_ui <- renderUI({
+  output$mk_subset_dp_ui <- renderUI({
     color_mk <- names(fcs_data$use_markers)[1]
     if(is.null(fcs_data$use_markers)){ return(NULL)}
     fluidRow(
-      selectInput("exclude_mk_data_preparation", label = "Exclude markers",
-                  choices = names(fcs_data$use_markers),
-                  multiple = TRUE),
-      actionButton("exclud_mk_button", label = "Exclude markers")
+      column(1),
+      column(10,
+             selectInput("exclude_mk_data_preparation", label = "Exclude markers",
+                         choices = names(fcs_data$use_markers),
+                         multiple = TRUE),
+             actionButton("exclud_mk_button", label = "Exclude markers")
+      )
     )
   })
 
@@ -207,20 +276,29 @@ cytofCore_server <- function(input, output){
   })
 
   ##### Reactively show current use_markers from "fcs_data" object
-  output$mk_rested_data_preparation <- renderPrint({
+  output$mk_rested_dp <- renderPrint({
     fcs_data$use_markers
   })
-  output$mk_excluded_data_preparation <- renderPrint({
+  output$mk_excluded_dp <- renderPrint({
     excluded_mk <- get_use_marker(fcs_data$panel)
     excluded_mk <- excluded_mk[!(excluded_mk %in% fcs_data$use_markers)]
     return(excluded_mk)
   })
 
+  ##### Create UI to choose target marker for marker density plot
+  output$mk_density_dp_ui <- renderUI({
+    if(is.null(fcs_data$use_markers)){ return(NULL)}
+    selectInput('mk_density_dp', label = h4("Plotted marker"),
+                choices = names(fcs_data$use_markers),
+                #choices = c(1,2,3),
+                selected = 1)
+  })
+
   ##### Drawing the reactive histogram plot of marker expression
-  output$mk_hist_data_preparation <- renderPlot({
+  output$mk_density_plot_dp <- renderPlot({
     if(is.null(fcs_data$tSNE)){return(NULL)}
-    color_mk <- "Marker was not choose"
-    if(!is.null(input$mk_data_preparation)){color_mk <- input$mk_data_preparation}
+    color_mk <- names(fcs_data$use_markers)[1]
+    if(!is.null(input$mk_density_dp)){color_mk <- input$mk_density_dp}
     plots$mk_hist <- ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
@@ -245,8 +323,7 @@ cytofCore_server <- function(input, output){
   output$smpl_hist_preparation <- renderPlot({
     if(is.null(fcs_data$cell_number)){return(NULL)}
     plots$smpl_hist <- ggplot(data = fcs_data$cell_number, aes(x = smpl, y = cell_nmbr))+
-      geom_bar(stat="identity") +
-      coord_flip()
+      geom_bar(stat="identity", fill = "black")
     return(plots$smpl_hist)
   })
 
@@ -306,7 +383,6 @@ cytofCore_server <- function(input, output){
                                                    cell_clustering = clusterisation$cell_clustering, method = method,
                                                    perplexity = cluster_settings$perplexity,
                                                    theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
-      incProgress(1, detail = "drawing abundance plot")
       clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
                                                              cell_clustering = clusterisation$cell_clustering)
       incProgress(1)
@@ -316,22 +392,22 @@ cytofCore_server <- function(input, output){
 
   })
 
-  #### Create UI to simple panele
-  observeEvent(input$draw_simple_claster, {
-    output$dvance_cluster_ui <- NULL
-  })
+  ##### Create UI to simple panele
+  #observeEvent(input$draw_simple_claster, {
+  #  output$advance_cluster_ui <- NULL
+  #})
 
   #### Create UI to advice panele
-  observeEvent(input$draw_advance_claster, {
-    output$dvance_cluster_ui <- renderUI({
-      fluidRow(
-        h4("Options to tSNE plotting"),
-        column(3, numericInput("cluster_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
-        column(3, numericInput("cluster_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
-        column(3, numericInput("cluster_max_iter", "Iterations", value = 1000, step = 500))
-      )
-    })
-  })
+  #observeEvent(input$draw_advance_claster, {
+  #  output$advance_cluster_ui <- renderUI({
+  #    fluidRow(
+  #      h4("Options to tSNE plotting"),
+  #      column(3, numericInput("cluster_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
+  #      column(3, numericInput("cluster_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
+  #      column(3, numericInput("cluster_max_iter", "Iterations", value = 1000, step = 500))
+  #    )
+  #  })
+  #})
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
@@ -364,12 +440,12 @@ cytofCore_server <- function(input, output){
   })
 
   ##### Create UI to choose clusters or marker to colour the UMAP plot
-  output$mk_target_clusterisation_ui <- renderUI({
-    if(is.null(fcs_data$use_markers)){return(NULL)}
-    selectInput("mk_target_clusterisation", label = h4("Plotted marker"),
-                choices = c("cluster", names(fcs_data$use_markers)),
-                selected = 1)
-  })
+  #output$mk_target_clusterisation_ui <- renderUI({
+  #  if(is.null(fcs_data$use_markers)){return(NULL)}
+  #  selectInput("mk_target_clusterisation", label = h4("Plotted marker"),
+  #              choices = c("cluster", names(fcs_data$use_markers)),
+  #              selected = 1)
+  #})
 
 
   ##### Create UI to choose clusters to merge
@@ -445,7 +521,11 @@ cytofCore_server <- function(input, output){
   ##### Drawing the reactive and interactive UMAP plot
   output$scatter_plot_clust <- renderPlot({
     if(is.null(clusterisation$umap_df)){return(NULL)}
+
+    print("Drawing UMAP")
+
     focus_node <- input$current_node_id
+    print(focus_node)
     plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
       geom_point(size = 0.8)
     if(input$mk_target_clusterisation == 'cluster'){
@@ -459,6 +539,97 @@ cytofCore_server <- function(input, output){
       theme_bw()
     plots$scatter_clust <- plt
     return(plt)
+  })
+
+  ##### Create Scatter plot and mk choice ui for dpsection
+  output$scatter_plot_dp_ui <- renderUI({
+    if(is.null(fcs_data$tSNE)){return(NULL)}
+    if(is.null(clusterisation$umap_df)){
+      return(
+        box(
+          fluidRow(
+            column(2, actionBttn(inputId = "redraw", style = "material-circle", color = "default" ,icon = icon("redo"))),
+            column(2,
+                   dropdownButton(
+                     tags$h4("Options of plotting"),
+                     numericInput("n_cell_plot_data_preparation",
+                                  label = h5("Cell fraction to display"), value = 0.5, step = 0.1),
+                     selectInput("method_plot_data_preparation", label = h5("Visualisation method"),
+                                 choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
+                                 selected = "tSNE"),
+                     icon = icon("edit"), status = "primary", tooltip = tooltipOptions(title = "plot setting")
+                   )
+            ),
+            column(2,
+                   dropdownButton(
+                     tags$h4("Advanced options"),
+                     numericInput("data_prep_perplexity", "tSNE Perplexity", min = 0, max = 200, value = 30, step = 5),
+                     numericInput("data_prep_theta", "tSNE Theta", min = 0, max = 1, value = 0.5, step = 0.1),
+                     numericInput("data_prep_max_iter", "tSNE Iterations", value = 1000, step = 500),
+                     icon = icon("gear"), status = "primary", tooltip = tooltipOptions(title = "plot setting")
+                   )
+
+            ),
+            column(2,
+                   dropdownButton(
+                     selectInput('dwn_scatter_dp_ext', label = NULL,
+                                 choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp")),
+                     downloadButton('dwn_scatter_dp', ""),
+                     icon = icon("save"), status = "primary", tooltip = tooltipOptions(title = "save plot")
+                   )
+
+            )
+          ),
+          plotOutput('scatter_plot_data_preparation'),
+          selectInput('mk_scatter_dp', label = h4("Plotted marker"),
+                      choices = names(fcs_data$use_markers), selected = 1)
+        )
+      )
+    }
+    if(!is.null(clusterisation$umap_df)){
+      return(
+        box(
+          fluidRow(
+            column(2, actionBttn(inputId = "redraw_clasterisation", style = "material-circle", color = "default" ,icon = icon("redo"))),
+            column(2,
+                   dropdownButton(
+                     tags$h4("Options of plotting"),
+                     numericInput("n_cell_plot_clasterisation",
+                                  label = h4("Cell fraction to display"), value = 0.5, step = 0.1),
+                     selectInput("method_plot_clasterisation", label = h4("Visualisation method"),
+                                 choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
+                                 selected = "UMAP"),
+                     icon = icon("edit"), status = "primary", tooltip = tooltipOptions(title = "plot setting")
+                   )
+            ),
+            column(2,
+                   dropdownButton(
+                     tags$h4("Advanced options"),
+                     numericInput("cluster_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5),
+                     numericInput("cluster_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1),
+                     numericInput("cluster_max_iter", "Iterations", value = 1000, step = 500),
+                     icon = icon("gear"), status = "primary", tooltip = tooltipOptions(title = "plot setting")
+                   )
+            ),
+            column(2,
+                   dropdownButton(
+                     selectInput('dwn_scatter_clust_ext', label = NULL,
+                                 choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png",
+                                                'tiff' = "tiff", 'svg' = "svg", 'bmp' = "bmp")),
+                     downloadButton('dwn_scatter_clust', ""),
+                     icon = icon("save"), status = "primary", tooltip = tooltipOptions(title = "save plot")
+                   )
+
+            )
+          ),
+          plotOutput('scatter_plot_clust', click = "plot_click"),
+          selectInput("mk_target_clusterisation", label = h4("Plotted marker"),
+                      choices = c("cluster", names(fcs_data$use_markers)),
+                      selected = 1)
+        )
+      )
+    }
   })
 
   ##### Download scatter plot for clustering
@@ -497,6 +668,7 @@ cytofCore_server <- function(input, output){
     }
   )
 
+
   ##### Drawing the reactive and interactive graph with clusters
   output$network <- renderVisNetwork({
     if(is.null(clusterisation$nodes)){return(NULL)}
@@ -514,6 +686,17 @@ cytofCore_server <- function(input, output){
                  forceAtlas2Based = list(gravitationalConstant = gravity))
   })
 
+  ##### Create network of clusters ui for navigation
+  output$network_clust_ui <- renderUI({
+    if (is.null(clusterisation$edges)){return(NULL)}
+    box(
+      visNetworkOutput("network"),
+      sliderInput('edges_threshold_clusterisation', "Edge weight threshold for graph",
+                  min =0, max = 1, value = 0.5, step = 0.01),
+      sliderInput('gravity_clusterisation', "Gravity for graph",
+                  min = -100, max = 0, value = -40, step = 1)
+    )
+  })
 
   ########################
   ### Gene expressions ###
@@ -722,26 +905,26 @@ cytofCore_server <- function(input, output){
   corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
                                   bg_anova_alpha = 0.01, bg_ctCor_alpha = 0.01, gene_ctCor_alpha = 0.01)
 
-  observeEvent(input$advanced_corr_settings, {
-    output$corr_analysis_settings_ui <- renderUI({
-      fluidRow(
-        column(5, wellPanel(
-          selectInput("method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
-          numericInput("corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_threshold", "Correlation coefficient threshold:", min = -100, max = 100, value = 0.1, step = 0.1)
-        )),
-        column(5, wellPanel(
-          numericInput("corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
-        )),
-        column(2, wellPanel(
-          actionButton('neo4j_activaation', "Neo4j"),
-          uiOutput('neo4j_ui')
-        ))
-      )
-    })
-  })
+  #observeEvent(input$advanced_corr_settings, {
+  #  output$corr_analysis_settings_ui <- renderUI({
+  #    fluidRow(
+  #      column(5, wellPanel(
+  #        selectInput("method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
+  #        numericInput("corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+  #        numericInput("corr_threshold", "Correlation coefficient threshold:", min = -100, max = 100, value = 0.1, step = 0.1)
+  #      )),
+  #      column(5, wellPanel(
+  #        numericInput("corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+  #        numericInput("corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+  #        numericInput("corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+  #      )),
+  #      column(2, wellPanel(
+  #        actionButton('neo4j_activaation', "Neo4j"),
+  #        uiOutput('neo4j_ui')
+  #      ))
+  #    )
+  #  })
+  #})
 
   observeEvent(input$simple_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
@@ -762,16 +945,16 @@ cytofCore_server <- function(input, output){
     if(!is.null(input$corr_gene_ctCor_alpha)){corr_settings$gene_ctCor_alpha <- input$corr_gene_ctCor_alpha}
   })
 
-  observeEvent(input$neo4j_activaation, {
-    output$neo4j_ui <- renderUI({
-      fluidRow(
-        h5("Check that neo4j database is created and activated"),
-        textInput('user_neo4j', label = h4("User name"), value = "neo4j"),
-        textInput('password_neo4j', label = h4("Password"), value = "password"),
-        actionButton('neo4j_export', "Export")
-      )
-    })
-  })
+  #observeEvent(input$neo4j_activaation, {
+  #  output$neo4j_ui <- renderUI({
+  #    fluidRow(
+  #      h5("Check that neo4j database is created and activated"),
+  #      textInput('user_neo4j', label = h4("User name"), value = "neo4j"),
+  #      textInput('password_neo4j', label = h4("Password"), value = "password"),
+  #      actionButton('neo4j_export', "Export")
+  #    )
+  #  })
+  #})
 
   observeEvent(input$corr_analysis, {
     options(warn=-1)
@@ -806,7 +989,7 @@ cytofCore_server <- function(input, output){
   })
 
   ##### Drawing the reactive and interactive graph network2 with clusters
-  output$network2 <- renderVisNetwork({
+  output$network_corr <- renderVisNetwork({
     if(is.null(clusterisation$nodes)){return(NULL)}
     edges_threshold <- input$edges_threshold_abund_corr
     if(is.null(input$edges_threshold_abund_corr)){edges_threshold <- 0.5}
@@ -875,26 +1058,26 @@ cytofCore_server <- function(input, output){
   mk_corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
                                   bg_anova_alpha = 0.01, bg_ctCor_alpha = 0.01, gene_ctCor_alpha = 0.01)
 
-  observeEvent(input$advanced_mk_corr_settings, {
-    output$mk_corr_analysis_settings_ui <- renderUI({
-      fluidRow(
-        column(5, wellPanel(
-          selectInput("mk_corr_method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
-          numericInput("mk_corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.1, step = 0.001),
-          numericInput("mk_corr_threshold", "Correlation coefficient threshold:", min = 0, max = 100, value = 0, step = 0.1)
-        )),
-        column(5, wellPanel(
-          numericInput("mk_corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("mk_corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-          numericInput("mk_corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
-        )),
-        column(2, wellPanel(
-          actionButton('neo4j_activaation', "Neo4j"),
-          uiOutput('neo4j_ui')
-        ))
-      )
-    })
-  })
+  #observeEvent(input$advanced_mk_corr_settings, {
+  #  output$mk_corr_analysis_settings_ui <- renderUI({
+  #    fluidRow(
+  #      column(5, wellPanel(
+  #        selectInput("mk_corr_method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
+  #        numericInput("mk_corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.1, step = 0.001),
+  #        numericInput("mk_corr_threshold", "Correlation coefficient threshold:", min = 0, max = 100, value = 0, step = 0.1)
+  #      )),
+  #      column(5, wellPanel(
+  #        numericInput("mk_corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+  #        numericInput("mk_corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
+  #        numericInput("mk_corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
+  #      )),
+  #      column(2, wellPanel(
+  #        actionButton('neo4j_activaation', "Neo4j"),
+  #        uiOutput('neo4j_ui')
+  #      ))
+  #    )
+  #  })
+  #})
 
   observeEvent(input$simple_mk_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
@@ -974,28 +1157,28 @@ cytofCore_server <- function(input, output){
     print("... Correlation analysis finished")
   })
 
-  ##### Drawing the reactive and interactive graph network_mk with clusters for navigation in marker correlation
-  output$network_mk <- renderVisNetwork({
-    if(is.null(clusterisation$nodes)){return(NULL)}
-    edges_threshold <- input$edges_threshold_mk_corr
-    if(is.null(input$edges_threshold_mk_corr)){edges_threshold <- 0.5}
-    gravity <- input$gravity_mk_corr
-    if(is.null(input$gravity_mk_corr)){gravity <- -40}
-    edges <- filter_edges(clusterisation$edges, edges_threshold)
-
-    visNetwork(clusterisation$nodes, edges) %>%
-      visInteraction(hover = T) %>%
-      visEvents(select = "function(data) {
-                            Shiny.onInputChange('current_node_mk_id2', data.nodes)
-                            Shiny.onInputChange('current_edges_mk_id2', data.edges);
-                          ;}") %>%
-      visPhysics(solver = "forceAtlas2Based",
-                 forceAtlas2Based = list(gravitationalConstant = gravity))
-  })
+  ###### Drawing the reactive and interactive graph network_mk with clusters for navigation in marker correlation
+  #output$network_mk <- renderVisNetwork({
+  #  if(is.null(clusterisation$nodes)){return(NULL)}
+  #  edges_threshold <- input$edges_threshold_mk_corr
+  #  if(is.null(input$edges_threshold_mk_corr)){edges_threshold <- 0.5}
+  #  gravity <- input$gravity_mk_corr
+  #  if(is.null(input$gravity_mk_corr)){gravity <- -40}
+  #  edges <- filter_edges(clusterisation$edges, edges_threshold)
+  #
+  #  visNetwork(clusterisation$nodes, edges) %>%
+  #    visInteraction(hover = T) %>%
+  #    visEvents(select = "function(data) {
+  #                          Shiny.onInputChange('current_node_mk_id2', data.nodes)
+  #                          Shiny.onInputChange('current_edges_mk_id2', data.edges);
+  #                        ;}") %>%
+  #    visPhysics(solver = "forceAtlas2Based",
+  #               forceAtlas2Based = list(gravitationalConstant = gravity))
+  #})
 
   #### Choice a focused node from the network_mk
   focus_mk_corr <- reactive({
-    return(list(input$current_node_mk_id2, input$current_edges_mk_id2))
+    return(list(input$current_node_id2, input$current_edges_id2))
   })
 
   #### Create the table of correlation signal by a focused node from the network_mk
@@ -1061,3 +1244,4 @@ cytofCore_server <- function(input, output){
 
 
 }
+

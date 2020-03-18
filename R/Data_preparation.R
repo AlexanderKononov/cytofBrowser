@@ -225,10 +225,8 @@ scatter_plot_data_prep <- function(fcs_raw, use_markers, sampling_size = 0.5, me
   ## How many cells to downsample per-sample
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)             ################ Number of cells to ploting
   tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
-  print(tsne_ncells)
   if(!is.null(size_fuse) & (sum(tsne_ncells) > size_fuse)){tsne_ncells <- as.integer((tsne_ncells*size_fuse)/sum(tsne_ncells))}
   names(tsne_ncells) <- names(table(sample_ids))
-  print(tsne_ncells)
 
   ## Get subsampled indices
   set.seed(1234)
