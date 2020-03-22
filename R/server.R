@@ -451,12 +451,14 @@ cytofBrowser_server <- function(input, output){
   ##### Create UI to choose clusters to merge
   output$mergeing_clusterisation_ui <- renderUI({
     if(is.null(clusterisation$cell_clustering)){return(NULL)}
-    wellPanel(
-      h4("Merging clusters"),
-      selectInput("cluster_to_merge_clusterisation", label = h5("Choose clusters"),
-                  choices = unique(clusterisation$cell_clustering),
-                  multiple = TRUE),
-      actionButton("merge_clusterisation", label = "Merge")
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Merging clusters"),
+             selectInput("cluster_to_merge_clusterisation", label = h5("Choose clusters"),
+                         choices = unique(clusterisation$cell_clustering), multiple = TRUE),
+             actionButton("merge_clusterisation", label = "Merge")
+      )
     )
   })
 
@@ -486,11 +488,14 @@ cytofBrowser_server <- function(input, output){
   ##### Create UI to rename clusters
   output$rename_clusterisation_ui <- renderUI({
     if(is.null(input$current_node_id)){return(NULL)}
-    wellPanel(
-      h4("Rename cluster"),
-      textInput("new_cluster_name_clusterisation", label = h5("Write new name"),
-                          value = as.character(input$current_node_id)),
-      actionButton("rename_clusterisation", label = "Rename")
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Rename cluster"),
+             textInput("new_cluster_name_clusterisation", label = h5("Write new name"),
+                       value = as.character(input$current_node_id)),
+             actionButton("rename_clusterisation", label = "Rename")
+      )
     )
   })
 

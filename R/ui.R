@@ -79,7 +79,12 @@ cytofBrowserGUI <-function(){
                                numericInput("k", label = h4("Choose number of clusters"), value = 8)
                              ),
                              uiOutput("mk_subset_clusterisation_ui"),
-                             actionButton("start_clusterization", label = "Clustering")
+                             actionButton("start_clusterization", label = "Clustering"),
+                    ),
+                    tabPanel("Cluster management",
+                             uiOutput("mergeing_clusterisation_ui"),
+                             hr(),
+                             uiOutput("rename_clusterisation_ui")
                     )
                   ),
                   uiOutput('scatter_plot_dp_ui'),
