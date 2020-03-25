@@ -1,4 +1,4 @@
-Package: cytofCore
+Package: cytofBrowser
 Title: Detail analysis and visualisation CyTOF data
 Version: 0.1.0
 Author: Alexander Kononov <kononov.nov@mail.ru>
@@ -7,7 +7,7 @@ Description: The package focuses on analysis of CyTOF proteomic data.
   It is of the pipeline which starts from fcs files and goes to markers
   and cell type abundance correlation analysis through marker filtration
   and cell clusterisation steps. Despite that, there are functions
-  available for interactive R session, it is assumed that cytofCore
+  available for interactive R session, it is assumed that cytofBrowser
   are run with a graphical interface as R Shiny app GUI.
 License: GPL-3
 Encoding: UTF-8
@@ -40,7 +40,7 @@ Imports:
     utils,
     visNetwork,
     neo4r
-URL: https://github.com/AlexanderKononov/cytofCore
-BugReports: https://github.com/AlexanderKononov/cytofCore/issues
+URL: https://github.com/AlexanderKononov/cytofBrowser
+BugReports: https://github.com/AlexanderKononov/cytofBrowser/issues
 Suggests: 
     covr
