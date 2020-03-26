@@ -387,27 +387,7 @@ cytofBrowser_server <- function(input, output){
                                                              cell_clustering = clusterisation$cell_clustering)
       incProgress(1)
     })
-
-
-
   })
-
-  ##### Create UI to simple panele
-  #observeEvent(input$draw_simple_claster, {
-  #  output$advance_cluster_ui <- NULL
-  #})
-
-  #### Create UI to advice panele
-  #observeEvent(input$draw_advance_claster, {
-  #  output$advance_cluster_ui <- renderUI({
-  #    fluidRow(
-  #      h4("Options to tSNE plotting"),
-  #      column(3, numericInput("cluster_perplexity", "Perplexity", min = 0, max = 200, value = 30, step = 5)),
-  #      column(3, numericInput("cluster_theta", "Theta", min = 0, max = 1, value = 0.5, step = 0.1)),
-  #      column(3, numericInput("cluster_max_iter", "Iterations", value = 1000, step = 500))
-  #    )
-  #  })
-  #})
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
@@ -438,15 +418,6 @@ cytofBrowser_server <- function(input, output){
                 choices = names(fcs_data$use_markers),
                 multiple = TRUE)
   })
-
-  ##### Create UI to choose clusters or marker to colour the UMAP plot
-  #output$mk_target_clusterisation_ui <- renderUI({
-  #  if(is.null(fcs_data$use_markers)){return(NULL)}
-  #  selectInput("mk_target_clusterisation", label = h4("Plotted marker"),
-  #              choices = c("cluster", names(fcs_data$use_markers)),
-  #              selected = 1)
-  #})
-
 
   ##### Create UI to choose clusters to merge
   output$mergeing_clusterisation_ui <- renderUI({
@@ -910,27 +881,6 @@ cytofBrowser_server <- function(input, output){
   corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
                                   bg_anova_alpha = 0.01, bg_ctCor_alpha = 0.01, gene_ctCor_alpha = 0.01)
 
-  #observeEvent(input$advanced_corr_settings, {
-  #  output$corr_analysis_settings_ui <- renderUI({
-  #    fluidRow(
-  #      column(5, wellPanel(
-  #        selectInput("method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
-  #        numericInput("corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-  #        numericInput("corr_threshold", "Correlation coefficient threshold:", min = -100, max = 100, value = 0.1, step = 0.1)
-  #      )),
-  #      column(5, wellPanel(
-  #        numericInput("corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-  #        numericInput("corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-  #        numericInput("corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
-  #      )),
-  #      column(2, wellPanel(
-  #        actionButton('neo4j_activaation', "Neo4j"),
-  #        uiOutput('neo4j_ui')
-  #      ))
-  #    )
-  #  })
-  #})
-
   observeEvent(input$simple_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
     corr_settings$method <- "spearman"
@@ -949,17 +899,6 @@ cytofBrowser_server <- function(input, output){
     if(!is.null(input$corr_bg_ctCor_alpha)){corr_settings$bg_ctCor_alpha <- input$corr_bg_ctCor_alpha}
     if(!is.null(input$corr_gene_ctCor_alpha)){corr_settings$gene_ctCor_alpha <- input$corr_gene_ctCor_alpha}
   })
-
-  #observeEvent(input$neo4j_activaation, {
-  #  output$neo4j_ui <- renderUI({
-  #    fluidRow(
-  #      h5("Check that neo4j database is created and activated"),
-  #      textInput('user_neo4j', label = h4("User name"), value = "neo4j"),
-  #      textInput('password_neo4j', label = h4("Password"), value = "password"),
-  #      actionButton('neo4j_export', "Export")
-  #    )
-  #  })
-  #})
 
   observeEvent(input$corr_analysis, {
     options(warn=-1)
@@ -1022,9 +961,10 @@ cytofBrowser_server <- function(input, output){
     if(is.null(correlation$signals_between_clusters)){return(NULL)}
     if(is.null(correlation$signals_in_cluster)){return(NULL)}
     focus_corr_data <- NULL
+    signals_between_clusters_top <- get_signals_between_clusters_top(correlation$signals_between_clusters, fcs_data$use_markers, adj_pValue = 0.01)
+    signals_in_cluster_top <- get_signals_in_cluster_top(correlation$signals_in_cluster, fcs_data$use_markers, adj_pValue = 0.01)
     if(is.null(focus_corr()[[1]]) & length(focus_corr()[[2]]==1)){
       target_clusters <- clusterisation$edges[clusterisation$edges$id == focus_corr()[[2]], c("from", "to")]
-      signals_between_clusters_top <- get_signals_between_clusters_top(correlation$signals_between_clusters, fcs_data$use_markers)
       focus_corr_data <- signals_between_clusters_top[(signals_between_clusters_top$signaling_cluster %in% target_clusters) &
                                               (signals_between_clusters_top$targetet_cluster %in% target_clusters),]
       if(nrow(focus_corr_data) < 2){
@@ -1033,11 +973,17 @@ cytofBrowser_server <- function(input, output){
       }
     }
     if(length(focus_corr()[[1]])==1){
-      signals_in_cluster_top <- get_signals_in_cluster_top(correlation$signals_in_cluster, fcs_data$use_markers)
       focus_corr_data <- signals_in_cluster_top[signals_in_cluster_top$cluster == focus_corr()[[1]],]
       if (nrow(focus_corr_data) < 2) {focus_corr_data <- signals_in_cluster[signals_in_cluster$cluster == focus_corr()[[1]],]}
     }
+    if(is.null(focus_corr()[[2]]) & is.null(focus_corr()[[1]])){
+      focus_corr_data <- rbind(signals_between_clusters_top, data.frame(signaling_cluster = signals_in_cluster_top$cluster,
+                                                                  targetet_cluster = signals_in_cluster_top$cluster,
+                                                                  gene_in_target_cluster = signals_in_cluster_top$gene,
+                                                                  signals_in_cluster_top[,-c(1, 2)]))
+    }
     correlation$focus_corr_data <- focus_corr_data
+    signals_in_cluster_top
     return(focus_corr_data)
   }))
 
@@ -1062,27 +1008,6 @@ cytofBrowser_server <- function(input, output){
 
   mk_corr_settings <- reactiveValues(method = "spearman", pValue = 0.01, threshold = 0.1,
                                   bg_anova_alpha = 0.01, bg_ctCor_alpha = 0.01, gene_ctCor_alpha = 0.01)
-
-  #observeEvent(input$advanced_mk_corr_settings, {
-  #  output$mk_corr_analysis_settings_ui <- renderUI({
-  #    fluidRow(
-  #      column(5, wellPanel(
-  #        selectInput("mk_corr_method", "Select correlation method:", c("spearman" = "Spearman", "pearson" = "Pearson")),
-  #        numericInput("mk_corr_pValue", "p-Value filter (alpha):", min = 0, max = 1, value = 0.1, step = 0.001),
-  #        numericInput("mk_corr_threshold", "Correlation coefficient threshold:", min = 0, max = 100, value = 0, step = 0.1)
-  #      )),
-  #      column(5, wellPanel(
-  #        numericInput("mk_corr_bg_anova_alpha", "Background anova filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-  #        numericInput("mk_corr_bg_ctCor_alpha", "Background correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001),
-  #        numericInput("mk_corr_gene_ctCor_alpha", "Marker correlation filter (alpha):", min = 0, max = 1, value = 0.01, step = 0.001)
-  #      )),
-  #      column(2, wellPanel(
-  #        actionButton('neo4j_activaation', "Neo4j"),
-  #        uiOutput('neo4j_ui')
-  #      ))
-  #    )
-  #  })
-  #})
 
   observeEvent(input$simple_mk_corr_settings,{
     output$corr_analysis_settings_ui <- NULL
@@ -1161,25 +1086,6 @@ cytofBrowser_server <- function(input, output){
     })
     print("... Correlation analysis finished")
   })
-
-  ###### Drawing the reactive and interactive graph network_mk with clusters for navigation in marker correlation
-  #output$network_mk <- renderVisNetwork({
-  #  if(is.null(clusterisation$nodes)){return(NULL)}
-  #  edges_threshold <- input$edges_threshold_mk_corr
-  #  if(is.null(input$edges_threshold_mk_corr)){edges_threshold <- 0.5}
-  #  gravity <- input$gravity_mk_corr
-  #  if(is.null(input$gravity_mk_corr)){gravity <- -40}
-  #  edges <- filter_edges(clusterisation$edges, edges_threshold)
-  #
-  #  visNetwork(clusterisation$nodes, edges) %>%
-  #    visInteraction(hover = T) %>%
-  #    visEvents(select = "function(data) {
-  #                          Shiny.onInputChange('current_node_mk_id2', data.nodes)
-  #                          Shiny.onInputChange('current_edges_mk_id2', data.edges);
-  #                        ;}") %>%
-  #    visPhysics(solver = "forceAtlas2Based",
-  #               forceAtlas2Based = list(gravitationalConstant = gravity))
-  #})
 
   #### Choice a focused node from the network_mk
   focus_mk_corr <- reactive({

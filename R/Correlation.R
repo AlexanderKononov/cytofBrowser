@@ -227,13 +227,15 @@ take_top_correlation <- function(cor_tdata, adj_pValue = 0.01){
 #' @importFrom magrittr "%>%"
 #'
 #' @examples
-get_signals_between_clusters_top <- function(signals_between_clusters, use_markers){
-  signals_between_clusters_top <- take_top_correlation(signals_between_clusters)
+get_signals_between_clusters_top <- function(signals_between_clusters, use_markers, adj_pValue = 0.01){
+  signals_between_clusters_top <- take_top_correlation(signals_between_clusters, adj_pValue = adj_pValue)
   signals_between_clusters_top <- signals_between_clusters_top[signals_between_clusters_top$gene_in_target_cluster %in% use_markers,]
   signals_between_clusters_top$gene_in_target_cluster <- names(use_markers)[match(signals_between_clusters_top$gene_in_target_cluster, use_markers)]
-  signals_between_clusters_top$names <- paste0(signals_between_clusters_top$signaling_cluster, "-",
-                                               signals_between_clusters_top$targetet_cluster, "_",
-                                               signals_between_clusters_top$gene_in_target_cluster)
+  if(nrow(signals_between_clusters_top) > 0){
+    signals_between_clusters_top$names <- paste0(signals_between_clusters_top$signaling_cluster, "-",
+                                                 signals_between_clusters_top$targetet_cluster, "_",
+                                                 signals_between_clusters_top$gene_in_target_cluster)
+  }
   rownames(signals_between_clusters_top) <- NULL
   return(signals_between_clusters_top)
 }
@@ -248,11 +250,13 @@ get_signals_between_clusters_top <- function(signals_between_clusters, use_marke
 #' @importFrom magrittr "%>%"
 #'
 #' @examples
-get_signals_in_cluster_top <- function(signals_in_cluster_top, use_markers){
-  signals_in_cluster_top <- take_top_correlation(signals_in_cluster)
+get_signals_in_cluster_top <- function(signals_in_cluster, use_markers, adj_pValue = 0.01){
+  signals_in_cluster_top <- take_top_correlation(signals_in_cluster, adj_pValue = adj_pValue)
   signals_in_cluster_top <- signals_in_cluster_top[signals_in_cluster_top$gene %in% use_markers,]
   signals_in_cluster_top$gene <- names(use_markers)[match(signals_in_cluster_top$gene, use_markers)]
-  signals_in_cluster_top$names <- paste0(signals_in_cluster_top$cluster, "_", signals_in_cluster_top$gene)
+  if(nrow(signals_in_cluster_top) > 0){
+    signals_in_cluster_top$names <- paste0(signals_in_clsuter_top$cluster, "_", signals_in_cluster_top$gene)
+  }
   rownames(signals_in_cluster_top) <- NULL
   return(signals_in_cluster_top)
 }
