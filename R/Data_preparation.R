@@ -15,6 +15,14 @@ get_fcs_metadata <- function(fcs_files){
   md <- data.frame(path = fcs_files)
   md$path <- as.character(md$path)
   md$file_name <- basename(md$path)
+
+  samples <- gsub(".fcs", "", md$file_name)
+  md$short_name <- unlist(lapply(1:length(samples), function(x){
+    tmp <- unlist(strsplit(samples[x], ""))
+    if(length(tmp) <= 12){return(samples[x])}
+    return(paste0(paste0(tmp[1:7], collapse = ""), "_smpl_", as.character(x)))
+  }))
+
   return(md)
 }
 
@@ -40,12 +48,7 @@ get_fcs_metadata <- function(fcs_files){
 get_fcs_raw <- function(md){
   pathes <- as.vector(md$path)
   fcs_raw <- flowCore::read.flowSet(pathes, transformation = FALSE, truncate_max_range = FALSE)
-  samples <- unlist(gsub(".fcs", "", flowCore::sampleNames(fcs_raw)))
-  sampleNames(fcs_raw) <- unlist(lapply(1:length(samples), function(x){
-    tmp <- unlist(strsplit(samples[x], ""))
-    if(length(tmp) <= 12){return(samples[x])}
-    return(paste0(paste0(tmp[1:7], collapse = ""), "_smpl_", as.character(x)))
-  }))
+  sampleNames(fcs_raw) <- unlist(gsub(".fcs", "", flowCore::sampleNames(fcs_raw)))
   return(fcs_raw)
 }
 

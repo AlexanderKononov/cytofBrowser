@@ -25,6 +25,7 @@ Imports:
     corrplot,
     d3heatmap,
     DT,
+    fs,
     magrittr,
     stats,
     dplyr,

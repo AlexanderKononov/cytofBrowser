@@ -4,7 +4,11 @@
 \alias{get_signals_between_clusters_top}
 \title{Get the top of significant signals from signals_between_clusters object}
 \usage{
-get_signals_between_clusters_top(signals_between_clusters, use_markers)
+get_signals_between_clusters_top(
+  signals_between_clusters,
+  use_markers,
+  adj_pValue = 0.01
+)
 }
 \arguments{
 \item{use_markers}{}

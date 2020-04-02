@@ -99,7 +99,7 @@ get_cluster_annotation <- function(fcs_raw, som, mc, k){
 #' @return
 #'
 #' @examples
-get_cell_clustering_list <- function(som, mc, k){
+get_cell_clustering_vector <- function(som, mc, k){
   code_clustering <- mc[[k]]$consensusClass
   cell_clustering <- code_clustering[som$map$mapping[,1]]
   return(cell_clustering)
@@ -320,8 +320,32 @@ get_fcs_cluster_annotation <- function(fcs_raw, pattern = "clust"){
 #' @return
 #'
 #' @examples
-get_fcs_cell_clustering_list <- function(cell_clustering_list){
+get_fcs_cell_clustering_vector <- function(cell_clustering_list){
   cell_clustering <- unlist(cell_clustering_list)
   return(cell_clustering)
 }
 
+#### Adding of cluster-info to flowSet object
+#' Adding of cluster-info to flowSet object
+#'
+#' @param fcs_raw
+#' @param cell_clustering_list
+#'
+#' @return
+#' @importFrom flowCore sampleNames fr_append_cols
+#' @importClassesFrom flowCore flowSet
+#'
+#' @examples
+get_clustered_fcs_files <- function(fcs_raw, cell_clustering_list, column_name = "cluster"){
+  if(!all(flowCore::sampleNames(fcs_raw) %in% names(cell_clustering_list))){
+    print("Cluster and data samples does not match")
+    return(NULL)}
+  clustered_fcs <- lapply(flowCore::sampleNames(fcs_raw), function(s) {
+    addition_col <- as.matrix(cell_clustering_list[[s]])
+    colnames(addition_col) <- column_name
+    flowCore::fr_append_cols(fcs_raw[[s]], addition_col)
+  })
+  names(clustered_fcs) <- flowCore::sampleNames(fcs_raw)
+  clustered_fcs <- as(clustered_fcs, 'flowSet')
+  return(clustered_fcs)
+}
