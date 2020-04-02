@@ -194,4 +194,28 @@ get_threshold_exp_cell_f_cross_panel <- function(fcs_raw_set, cell_clustering_li
   return(exp_cell_f_cross_p)
 }
 
+##### Preparing the table with cross-panel correlations for downloading
 
+#' Preparing the table with cross-panel correlations for downloading
+#'
+#' @param abund_corr_info
+#'
+#' @return
+#' @importFrom reshape2 melt
+#'
+#' @examples
+get_write_corr_info_cross_p <- function(abund_corr_info){
+  write_corr_info_cross_p <- reshape2::melt(abund_corr_info$corr_coef)
+  rownames(write_corr_info_cross_p) <- paste0(as.character(write_corr_info_cross_p[,1]), "_vs_", as.character(write_corr_info_cross_p[,2]))
+  tmp_pval <- reshape2::melt(abund_corr_info$p_value)
+  rownames(tmp_pval) <- paste0(as.character(tmp_pval[,1]), "_vs_", as.character(tmp_pval[,2]))
+  tmp_pval <- tmp_pval[rownames(write_corr_info_cross_p), 3]
+  tmp_padj <- reshape2::melt(abund_corr_info$padj)
+  rownames(tmp_padj) <- paste0(as.character(tmp_padj[,1]), "_vs_", as.character(tmp_padj[,2]))
+  tmp_padj <- tmp_padj[rownames(write_corr_info_cross_p), 3]
+  write_corr_info_cross_p <- cbind(write_corr_info_cross_p, tmp_pval, tmp_padj)
+  colnames(write_corr_info_cross_p) <- c("cluster_1", "cluster_2", "corr_coef", "p_value", "padj")
+  return(write_corr_info_cross_p)
+}
+
+#get_write_corr_info_cross_p(abund_corr_info)

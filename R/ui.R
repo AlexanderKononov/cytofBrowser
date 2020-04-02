@@ -350,6 +350,11 @@ cytofBrowserGUI <-function(){
                                         selectInput('dwn_abund_corr_cross_p_ext', label = NULL,
                                                     choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png")),
                                         downloadButton('dwn_abund_corr_cross_p', ""),
+                                        hr(),
+                                        selectInput('dwn_table_abund_corr_cross_p_ext', label = NULL,
+                                                    choices = list("abundance data" = 'abund_data', "correlation data" = 'corr_data'),
+                                                    selected = 'corr_data'),
+                                        downloadButton('dwn_table_abund_corr_cross_p', ""),
                                         icon = icon("save"), status = "primary", tooltip = tooltipOptions(title = "save plot")
                                       )
                                )
@@ -386,6 +391,11 @@ cytofBrowserGUI <-function(){
                                         selectInput('dwn_exp_cell_f_corr_cross_p_ext', label = NULL,
                                                     choices = list('pdf' = "pdf", 'jpeg' = "jpeg", 'png' = "png")),
                                         downloadButton('dwn_exp_cell_f_corr_cross_p', ""),
+                                        hr(),
+                                        selectInput('dwn_table_exp_cell_f_corr_cross_p_ext', label = NULL,
+                                                    choices = list("expressing cell fractions" = 'exp_cell_f_data', "correlation data" = 'corr_data'),
+                                                    selected = 'corr_data'),
+                                        downloadButton('dwn_table_exp_cell_f_corr_cross_p', ""),
                                         icon = icon("save"), status = "primary", tooltip = tooltipOptions(title = "save plot")
                                       )
                                )

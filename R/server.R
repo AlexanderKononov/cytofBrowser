@@ -1322,6 +1322,17 @@ cytofBrowser_server <- function(input, output){
     }
   )
 
+  ##### Download abundance corelation tables  for cross-panel analusis
+  output$dwn_table_abund_corr_cross_p <- downloadHandler(
+    filename = function() {paste0("cross_panel_", input$dwn_table_abund_corr_cross_p_ext, ".csv")},
+    content = function(file) {
+      mode <- input$dwn_table_abund_corr_cross_p_ext
+      if(is.null(mode)){mode <- 'corr_data'}
+      if(mode == 'abund_data'){write.csv(crosspanel$abund_cross_p, file)}
+      if(mode == 'corr_data'){write.csv(get_write_corr_info_cross_p(crosspanel$abund_corr_info), file)}
+    }
+  )
+
   ##### UI to choose marker for expressing cell fraction correlations
   output$mk_exp_cell_f_cross_p_ui <- renderUI({
     if(is.null(crosspanel$use_common_mk)){return(NULL)}
@@ -1428,6 +1439,17 @@ cytofBrowser_server <- function(input, output){
         dev.off()
       }
       #ggsave(file, plot = plots$exp_cell_f_corr_cross_p, device = ext)
+    }
+  )
+
+  ##### Download expressing cell fraction corelation tables for cross-panel analusis
+  output$dwn_table_exp_cell_f_corr_cross_p <- downloadHandler(
+    filename = function() {paste0("cross_panel_",input$mk_exp_cell_f_cross_p,"_", input$dwn_table_exp_cell_f_corr_cross_p_ext, ".csv")},
+    content = function(file) {
+      mode <- input$dwn_table_exp_cell_f_corr_cross_p_ext
+      if(is.null(mode)){mode <- 'corr_data'}
+      if(mode == 'exp_cell_f_data'){write.csv(crosspanel$exp_cell_f_cross_p, file)}
+      if(mode == 'corr_data'){write.csv(get_write_corr_info_cross_p(crosspanel$exp_cell_f_corr_info), file)}
     }
   )
 
