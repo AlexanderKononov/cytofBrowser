@@ -106,7 +106,7 @@ get_cell_clustering_vector <- function(som, mc, k){
 }
 
 ###test
-#cell_clustering <- get_cell_clustering_list(som, mc, 6)
+#cell_clustering <- get_cell_clustering_vector(som, mc, 6)
 
 ##### Get euclidean distance between clones
 #' Get euclidean distance between clones
@@ -210,16 +210,19 @@ get_nodes <- function(edges, cell_clustering){
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
-get_inds_subset <- function(fcs_raw, sampling_size = 0.5){
+get_inds_subset <- function(fcs_raw, sampling_size = 0.5, size_fuse = 5000){
   sample_ids <- rep(flowCore::sampleNames(fcs_raw), flowCore::fsApply(fcs_raw, nrow))
   inds <- split(1:length(sample_ids), sample_ids)
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)
   tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
+  if(!is.null(size_fuse) & (sum(tsne_ncells) > size_fuse)){tsne_ncells <- as.integer((tsne_ncells/sum(tsne_ncells))*size_fuse)}
   names(tsne_ncells) <- names(table(sample_ids))
   tsne_inds <- lapply(names(inds), function(i){s <- sample(inds[[i]], tsne_ncells[i], replace = FALSE)})
   tsne_inds <- unlist(tsne_inds)
   return(tsne_inds)
 }
+
+#tsne_inds <- get_inds_subset(fcs_raw)
 
 ##### Get subseted dataframe for UMAP ploting
 #' Title
