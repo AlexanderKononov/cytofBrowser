@@ -29,6 +29,7 @@ get_fcs_metadata <- function(fcs_files){
 ### test
 #md <- get_fcs_metadata(c("./test_data/c13_20190704_hnp_perf_11_0_Alex2.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alex2.fcs",
 #                        "./test_data/c13_20190704_hnp_perf_11_0_Alez1.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alez1.fcs"))
+#md <- get_fcs_metadata("./../../Toni_data/EC_200117_Freshly labelled PBMCs _1_0/Activation_Activation full panel unstim TILs_033.fcs")
 
 ##### creat FlowSet object
 #' Creat FlowSet object
@@ -78,10 +79,10 @@ get_fcs_panel <- function(fcs_raw){
   panel <- panel[sapply(panel$desc, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
   panel <- panel[!is.na(panel$desc),]
   panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) x[length(x)])
-  panel$antigen <- gsub(" \\(v)", "", panel$antigen)
+  #panel$antigen <- gsub(" \\(v)", "", panel$antigen)
   panel$marker_class <- "type"
   panel$marker_class[sapply(panel$desc, function(x) any(sapply(tech_patterns$marker_tech, function(y) grepl(y,x))))] <- "state"
-  panel <- as.data.frame(apply(panel, c(1,2), function(x) gsub(" ", "_", x)))
+  #panel <- as.data.frame(apply(panel, c(1,2), function(x) gsub(" ", "_", x)))
   return(panel)
 }
 
@@ -104,7 +105,7 @@ get_fcs_panel <- function(fcs_raw){
 get_use_marker <- function(panel){
   use_markers <- as.character(panel$name[panel$marker_class == "type"])
   names(use_markers) <- panel$antigen[panel$marker_class == "type"]
-  names(use_markers) <- gsub("_(v)", "", names(use_markers), fixed = T)          ### It should be fixed (problem with "_(v)")
+  #names(use_markers) <- gsub("_(v)", "", names(use_markers), fixed = T)          ### It should be fixed (problem with "_(v)")
   return(use_markers)
 }
 
@@ -248,15 +249,21 @@ scatter_plot_data_prep <- function(fcs_raw, use_markers, sampling_size = 0.5, me
                          perplexity = perplexity, theta = theta, max_iter = max_iter)
     #tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2])
     tsne_out <- data.frame(tSNE1 = tsne_result$Y[, 1], tSNE2 = tsne_result$Y[, 2], expr[tsne_inds, use_markers])
+    colnames(tsne_out) <- c("tSNE1", "tSNE2", use_markers)
   }
 
   if(method == "UMAP"){
     ##### Run UMAP
     umap_out <- umap::umap(tsne_expr)
     tsne_out <- data.frame(tSNE1 = umap_out$layout[, 1], tSNE2 = umap_out$layout[, 2], expr[tsne_inds, use_markers])
+    colnames(tsne_out) <- c("tSNE1", "tSNE2", use_markers)
   }
 
   colnames(tsne_out)[match(use_markers, colnames(tsne_out))] <- names(use_markers)
   return(tsne_out)
 }
 
+#tSNE <- scatter_plot_data_prep(fcs_raw, use_markers, sampling_size = 0.1, method = "tSNE")
+#ggplot(tSNE,  aes(x = tSNE1, y = tSNE2, color = tSNE[,names(use_markers)[10]])) +
+#  geom_point(size = 0.2) +
+#  labs(color = names(use_markers)[10])

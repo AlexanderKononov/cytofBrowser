@@ -195,7 +195,7 @@ cytofBrowser_server <- function(input, output){
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- names(fcs_data$use_markers)[1]
     if(!is.null(input$mk_scatter_dp)){color_mk <- input$mk_scatter_dp}
-    plots$scatter_dp <- ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = eval(parse(text = color_mk)))) +
+    plots$scatter_dp <- ggplot(fcs_data$tSNE,  aes(x = tSNE1, y = tSNE2, color = fcs_data$tSNE[,color_mk])) +
       geom_point(size = 0.2) +
       scale_color_gradient2(midpoint = 0.5, low = 'blue', mid = "gray",  high = 'red') +
       labs(color = color_mk) +
@@ -302,7 +302,7 @@ cytofBrowser_server <- function(input, output){
     if(is.null(fcs_data$tSNE)){return(NULL)}
     color_mk <- names(fcs_data$use_markers)[1]
     if(!is.null(input$mk_density_dp)){color_mk <- input$mk_density_dp}
-    plots$mk_hist <- ggplot(fcs_data$tSNE, aes(x = eval(parse(text = color_mk)), y=..scaled..)) +
+    plots$mk_hist <- ggplot(fcs_data$tSNE, aes(x = fcs_data$tSNE[,color_mk], y=..scaled..)) +
       geom_density(fill = 'black') +
       labs(x = color_mk)
     return(plots$mk_hist)
@@ -505,7 +505,7 @@ cytofBrowser_server <- function(input, output){
 
     focus_node <- input$current_node_id
     print(focus_node)
-    plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = eval(parse(text = input$mk_target_clusterisation)))) +
+    plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = clusterisation$umap_df[,input$mk_target_clusterisation])) +
       geom_point(size = 0.8)
     if(input$mk_target_clusterisation == 'cluster'){
       plt <- plt + scale_color_manual(values = as.character(clusterisation$nodes$color))
@@ -791,7 +791,7 @@ cytofBrowser_server <- function(input, output){
     if(is.null(gene_expression$deconvol_expr_median)){return(NULL)}
     if(is.null(input$mk_deconvol_gene_expression)){return(NULL)}
     plots$deconvol_expr <- ggplot(data = gene_expression$deconvol_expr_median,
-           aes(x=sample_ids, y=cell_clustering, fill= eval(parse(text = input$mk_deconvol_gene_expression)))) +
+           aes(x=sample_ids, y=cell_clustering, fill= gene_expression$deconvol_expr_median[, input$mk_deconvol_gene_expression])) +
       geom_tile() +
       theme_light() +
       labs(fill = input$mk_deconvol_gene_expression) +
