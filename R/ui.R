@@ -37,7 +37,7 @@ cytofBrowserGUI <-function(){
                 fluidRow(
                   tabBox(
                     tabPanel("Uploading",
-                             shinyFilesButton('choose_fcs_dp', label='Select FCS files', title='Please select FCS files', multiple=TRUE),
+                             shinyFiles::shinyFilesButton('choose_fcs_dp', label='Select FCS files', title='Please select FCS files', multiple=TRUE),
                              hr(),
                              materialSwitch(inputId = 'extr_clust_dproc', label = "extract cluster info"),
                              conditionalPanel(
