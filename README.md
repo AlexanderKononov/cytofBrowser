@@ -19,6 +19,13 @@ if (!requireNamespace("devtools", quietly = TRUE))
 devtools::install_github("AlexanderKononov/cytofBrowser")
 ```
 
+The current version of shinyFiles for windows is not stable. You should use the previous version of the package.
+
+``` r
+lin <- "https://cran.r-project.org/src/contrib/Archive/shinyFiles/shinyFiles_0.7.5.tar.gz"
+install.packages(lin, repos=NULL, type="source")
+```
+
 Complete list of dependencies is listed in the DESCRIPTION and in the file Library\_louncher.R
 
 In a future, you can install the released version of cytofBrowser from [Bioconductor](https://www.bioconductor.org) with:
