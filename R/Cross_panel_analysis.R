@@ -183,7 +183,6 @@ get_threshold_exp_cell_f_cross_panel <- function(fcs_raw_set, cell_clustering_li
     for (s in use_samples) {
       for (cl in p_clusters){
         exp_data <- flowCore::exprs(fcs_raw_set[[p]][[s]])[cell_clustering_list_set[[p]][[s]] == cl , use_marker_set[[p]][target_mk]]
-        #set.seed(123)
         if(sum(exp_data != 0) <= min_cell_number){next}
         tmp_exp_cell_f[s,cl] <- sum(exp_data >= threshold)/length(exp_data)
       }
