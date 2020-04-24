@@ -31,6 +31,25 @@ get_fcs_metadata <- function(fcs_files){
 #                        "./test_data/c13_20190704_hnp_perf_11_0_Alez1.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alez1.fcs"))
 #md <- get_fcs_metadata("./../../Toni_data/EC_200117_Freshly labelled PBMCs _1_0/Activation_Activation full panel unstim TILs_033.fcs")
 
+#' extract metadata for build-in test dataset
+#'
+#' @param test_data_dproc
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_test_fcs_metadata <- function(test_data_dproc){
+  if(test_data_dproc == 'test_data'){
+    test_files <- c("KPC1_stroma.fcs", "KPC2_stroma.fcs", "KPC3_stroma.fcs", "KPC4_stroma.fcs",
+                    "KPC5_stroma.fcs", "KPC6_stroma.fcs", "KPC7_stroma.fcs")
+    test_files <- system.file("extdata",test_files,package = "cytofBrowser")
+    md <- get_fcs_metadata(test_files)
+  }
+  return(md)
+}
+
+
 ##### creat FlowSet object
 #' Creat FlowSet object
 #' @description The function takes dataframe with column contained  paths to

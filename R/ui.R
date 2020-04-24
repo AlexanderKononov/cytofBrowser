@@ -39,11 +39,16 @@ cytofBrowserGUI <-function(){
                     tabPanel("Uploading",
                              shinyFiles::shinyFilesButton('choose_fcs_dp', label='Select FCS files', title='Please select FCS files', multiple=TRUE),
                              hr(),
-                             materialSwitch(inputId = 'extr_clust_dproc', label = "extract cluster info"),
+                             materialSwitch(inputId = 'extr_clust_dproc', label = h4("extract cluster info")),
                              conditionalPanel(
                                condition = "input.extr_clust_dproc == true",
                                textInput("extr_clust_pattern_dproc",
                                          label = h5("full or part column name with clusters info (for cytofBrowser and cytofkit : <cluster>)"), value = "cluster")
+                             ),
+                             materialSwitch(inputId = 'test_data_upload_dproc', label = h4("build-in dataset"), value = FALSE),
+                             conditionalPanel(
+                               condition = "input.test_data_upload_dproc == true",
+                               selectInput('test_data_dproc', label = NULL, choices = c("Test data" = 'test_data'), selected = "Test data")
                              ),
                              hr(),
                              actionButton('butt_upload_dproc', label = "Upload")

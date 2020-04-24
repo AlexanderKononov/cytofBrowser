@@ -101,7 +101,9 @@ cytofBrowser_server <- function(input, output){
   observeEvent(input$butt_upload_dproc, {
     withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
       ## Get row data fcs files
-      fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$choose_fcs_dp)$datapath)
+      if(input$test_data_upload_dproc){fcs_data$md <- get_test_fcs_metadata(input$test_data_dproc)}
+      if(!input$test_data_upload_dproc){
+        fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$choose_fcs_dp)$datapath)}
       incProgress(1, detail = "Upload data" )
       fcs_data$fcs_raw <- get_fcs_raw(fcs_data$md)
       incProgress(1, detail = "Extraction panel")
