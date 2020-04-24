@@ -7,7 +7,7 @@
 #' from flowCore package.
 #'
 #' @param fcs_files list with paths
-#'
+#' @export
 #' @return The dataframe with paths to fcs files within one column and names of these files in another column
 #'
 #' @examples
@@ -43,6 +43,7 @@ get_fcs_metadata <- function(fcs_files){
 #' }
 #'
 #' @return flowSet object from flowCore package
+#' @export
 #' @importFrom flowCore read.flowSet sampleNames "sampleNames<-"
 #'
 #' @examples
