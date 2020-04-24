@@ -97,7 +97,7 @@ get_fcs_panel <- function(fcs_raw){
 #' are considered as technical signals
 #'
 #' @param panel dataframe with marker panel data
-#'
+#' @export
 #' @return the list value of which are marker names and names of the
 #' list element are names of antibody, relevant to the markers
 #'
@@ -127,7 +127,7 @@ upload_fcs_data <- function(fcs_files){
 #'
 #' @param fcs_raw flowSet object
 #' @param cofactor digit with used as denominator to transform data
-#'
+#' @export
 #' @return flowSet object with transform data by asinh function and divided
 #' by cofactor
 #' @importClassesFrom flowCore flowSet
@@ -189,7 +189,7 @@ outlier_by_quantile_transformation <- function(fcs_raw, quantile = quantile, use
 #'
 #' @return
 #' @importFrom flowCore sampleNames "sampleNames<-" fsApply
-#'
+#' @export
 #' @examples
 get_cell_number <- function(fcs_raw){
   cell_number <- data.frame(smpl = flowCore::sampleNames(fcs_raw), cell_nmbr = flowCore::fsApply(fcs_raw, nrow))
@@ -210,6 +210,7 @@ get_cell_number <- function(fcs_raw){
 #' @param sampling_size
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-" exprs "exprs<-"
 #' @importFrom Rtsne Rtsne
 #' @importFrom umap umap
