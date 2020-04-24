@@ -162,7 +162,7 @@ asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
 #' @importFrom matrixStats colQuantiles
 #'
 #' @examples
-outlier_by_quantile_transformation <- function(fcs_raw, quantile = quantile, use_marker = NULL){
+outlier_by_quantile_transformation <- function(fcs_raw, quantile = 0.01, use_marker = NULL){
   if(is.null(use_marker)){
     computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
     markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]

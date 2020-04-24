@@ -28,6 +28,9 @@ test_that(desc = "Check the main pipeline from upload data to clustering", code 
   fcs_raw <- fcs_asinh
   rm(fcs_asinh)
 
+  fcs_outlier_by_quantile <- cytofBrowser::outlier_by_quantile_transformation(fcs_raw)
+  expect_equal(length(fcs_outlier_by_quantile) == length(fcs_raw),TRUE,
+               info = "Error in function: outlier_by_quantile_transformation")
 
 })
 
