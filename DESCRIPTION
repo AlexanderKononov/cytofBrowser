@@ -44,4 +44,5 @@ Imports:
 URL: https://github.com/AlexanderKononov/cytofBrowser
 BugReports: https://github.com/AlexanderKononov/cytofBrowser/issues
 Suggests: 
-    covr
+    covr,
+    testthat
