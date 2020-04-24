@@ -6,6 +6,7 @@
 #' @param use_markers
 #'
 #' @return
+#' @export
 #' @importFrom FlowSOM ReadInput
 #' @importFrom FlowSOM BuildSOM
 #'
@@ -28,6 +29,7 @@ get_som <- function(fcs_raw, clust_markers){
 #' @param maxK
 #'
 #' @return
+#' @export
 #' @importFrom ConsensusClusterPlus ConsensusClusterPlus
 #'
 #' @examples
@@ -49,6 +51,7 @@ get_consensusClust <- function(som, maxK = 20){
 #' @param rate_var_expl
 #'
 #' @return
+#' @export
 #'
 #' @examples
 get_optimal_clusters <- function(mc, rate_var_expl = 0.9){
@@ -73,6 +76,7 @@ get_optimal_clusters <- function(mc, rate_var_expl = 0.9){
 #' @param k
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
@@ -97,6 +101,7 @@ get_cluster_annotation <- function(fcs_raw, som, mc, k){
 #' @param k
 #'
 #' @return
+#' @export
 #'
 #' @examples
 get_cell_clustering_vector <- function(som, mc, k){
@@ -116,6 +121,7 @@ get_cell_clustering_vector <- function(som, mc, k){
 #' @param cell_clustering
 #'
 #' @return
+#' @export
 #' @importFrom magrittr "%>%"
 #' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom dplyr group_by summarize_all funs
@@ -141,6 +147,7 @@ get_euclid_dist <- function(fcs_raw, use_markers, cell_clustering){
 #' @param cluster_euclidean_distance
 #'
 #' @return
+#' @export
 #'
 #' @examples
 get_edges <- function(cluster_euclidean_distance){
@@ -166,6 +173,7 @@ get_edges <- function(cluster_euclidean_distance){
 #' @param threshold
 #'
 #' @return
+#' @export
 #'
 #' @examples
 filter_edges <- function(edges, threshold){
@@ -181,6 +189,7 @@ filter_edges <- function(edges, threshold){
 #' @param cell_clustering
 #'
 #' @return
+#' @export
 #' @importFrom RColorBrewer brewer.pal.info brewer.pal
 #'
 #' @examples
@@ -207,6 +216,7 @@ get_nodes <- function(edges, cell_clustering){
 #' @param plot_ncell
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
@@ -234,6 +244,7 @@ get_inds_subset <- function(fcs_raw, sampling_size = 0.5, size_fuse = 5000){
 #' @param cell_clustering
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply exprs "exprs<-"
 #' @importFrom umap umap
 #' @importFrom Rtsne Rtsne
@@ -267,6 +278,7 @@ get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, c
 #' @param cell_clustering
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-"
 #'
 #' @examples
@@ -286,6 +298,7 @@ get_abundance_dataframe <- function(fcs_raw, cell_clustering){
 #' @param cluster_to_merge
 #'
 #' @return
+#' @export
 #' @importFrom magrittr "%>%"
 #'
 #' @examples
@@ -302,6 +315,7 @@ cluster_merging <- function(clusters, cluster_to_merge){
 #' @param pattern name or part of colomn name with cluster information. For cytofkit2 output it is "FlowSOM_clusterIDs"
 #'
 #' @return
+#' @export
 #' @importFrom flowCore fsApply sampleNames "sampleNames<-" pData "pData<-" parameters "parameters<-" exprs "exprs<-"
 #' @importClassesFrom flowCore flowSet
 #'
@@ -321,6 +335,7 @@ get_fcs_cluster_annotation <- function(fcs_raw, pattern = "clust"){
 #' @param cell_clustering_list
 #'
 #' @return
+#' @export
 #'
 #' @examples
 get_fcs_cell_clustering_vector <- function(cell_clustering_list){
@@ -335,6 +350,7 @@ get_fcs_cell_clustering_vector <- function(cell_clustering_list){
 #' @param cell_clustering_list
 #'
 #' @return
+#' @export
 #' @importFrom flowCore sampleNames fr_append_cols
 #' @importClassesFrom flowCore flowSet
 #'

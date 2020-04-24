@@ -127,6 +127,7 @@ upload_fcs_data <- function(fcs_files){
 #'
 #' @param fcs_raw flowSet object
 #' @param cofactor digit with used as denominator to transform data
+#' @param use_marker
 #' @export
 #' @return flowSet object with transform data by asinh function and divided
 #' by cofactor
@@ -154,6 +155,7 @@ asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
 #'
 #' @param fcs_raw
 #' @param quantile
+#' @param use_marker
 #'
 #' @return
 #' @export

@@ -14,7 +14,7 @@ test_that(desc = "Check the main pipeline from upload data to clustering", code 
   expect_equal(length(fcs_raw), 7, info = "Error in function: get_fcs_raw")
 
   panel <- cytofBrowser::get_fcs_panel(fcs_raw)
-  expect_equal(dim(panel), c(54,4), info = "Error in function: get_fcs_panel")
+  expect_equal(dim(panel), c(52,4), info = "Error in function: get_fcs_panel")
   expect_equal(all(panel$marker_class %in% c("type", "state")), TRUE,
                info = "Error in function: get_fcs_panel. problem with marker_class")
 
@@ -23,13 +23,13 @@ test_that(desc = "Check the main pipeline from upload data to clustering", code 
                info = "Error in function: get_use_marker")
 
   fcs_asinh <- cytofBrowser::asinh_transformation(fcs_raw)
-  expect_equal(length(fcs_asinh) == length(fcs_raw),TRUE, info = "Error in function: asinh_transformation")
-  expect_equal(dim(fcs_asinh[[1]]) == dim(fcs_raw[[1]]),TRUE, info = "Error in function: asinh_transformation")
+  expect_equal(length(fcs_asinh), length(fcs_raw), info = "Error in function: asinh_transformation")
+  expect_equal(dim(fcs_asinh[[1]]), dim(fcs_raw[[1]]), info = "Error in function: asinh_transformation")
   fcs_raw <- fcs_asinh
   rm(fcs_asinh)
 
   fcs_outlier_by_quantile <- cytofBrowser::outlier_by_quantile_transformation(fcs_raw)
-  expect_equal(length(fcs_outlier_by_quantile) == length(fcs_raw),TRUE,
+  expect_equal(length(fcs_outlier_by_quantile), length(fcs_raw),
                info = "Error in function: outlier_by_quantile_transformation")
 
 })

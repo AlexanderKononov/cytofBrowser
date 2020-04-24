@@ -4,14 +4,10 @@
 \alias{outlier_by_quantile_transformation}
 \title{Transformation to a from 0 to 1 variable and removing outliers}
 \usage{
-outlier_by_quantile_transformation(
-  fcs_raw,
-  quantile = quantile,
-  use_marker = NULL
-)
+outlier_by_quantile_transformation(fcs_raw, quantile = 0.01, use_marker = NULL)
 }
 \arguments{
-\item{quantile}{}
+\item{use_marker}{}
 }
 \value{
 

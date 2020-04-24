@@ -99,9 +99,6 @@ cytofBrowser_server <- function(input, output){
   plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
   observeEvent(input$butt_upload_dproc, {
-    print("wawaw")
-    print(roots)
-    print(parseFilePaths(roots, input$choose_fcs_dp))
     withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
       ## Get row data fcs files
       fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$choose_fcs_dp)$datapath)
