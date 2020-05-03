@@ -21,7 +21,7 @@
 #' @importFrom DT renderDataTable datatable
 #' @importFrom neo4r neo4j_api
 #' @importFrom ComplexHeatmap Heatmap
-#' @importFrom grid grid.grab grid.draw
+#' @importFrom grid grid.grab grid.draw gpar
 #' @importFrom gridGraphics grid.echo
 #' @importFrom fs path_home
 #'
