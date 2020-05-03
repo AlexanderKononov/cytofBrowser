@@ -1248,7 +1248,7 @@ cytofBrowser_server <- function(input, output){
     panel_content <- get_panel_content(crosspanel$fcs_raw_set)
     ComplexHeatmap::Heatmap(panel_content, cluster_rows = F, cluster_columns = F,
                             row_names_side = "left", column_names_side = "top",
-                            col = list("absent" = 'red3', "presented" = 'green3'), rect_gp = gpar(col = "white", lwd = 2),
+                            col = list("absent" = 'red3', "presented" = 'green3'), rect_gp = grid::gpar(col = "white", lwd = 2),
                             show_heatmap_legend = F)
 
   })
@@ -1258,8 +1258,8 @@ cytofBrowser_server <- function(input, output){
     if(length(crosspanel$use_marker_set) < 1){return(NULL)}
     mk_panel_content <- get_common_markers(crosspanel$use_marker_set)
     ComplexHeatmap::Heatmap(mk_panel_content, cluster_rows = F, cluster_columns = F,
-                            row_names_side = "left", column_names_side = "top", row_names_gp = gpar(fontsize = 8),
-                            col = list("absent" = 'red3', "presented" = 'green3'), rect_gp = gpar(col = "white", lwd = 2),
+                            row_names_side = "left", column_names_side = "top", row_names_gp = grid::gpar(fontsize = 8),
+                            col = list("absent" = 'red3', "presented" = 'green3'), rect_gp = grid::gpar(col = "white", lwd = 2),
                             show_heatmap_legend = F)
 
   })
