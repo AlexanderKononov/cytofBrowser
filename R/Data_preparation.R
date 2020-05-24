@@ -30,7 +30,7 @@ get_fcs_metadata <- function(fcs_files){
 #md <- get_fcs_metadata(c("./test_data/c13_20190704_hnp_perf_11_0_Alex2.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alex2.fcs",
 #                        "./test_data/c13_20190704_hnp_perf_11_0_Alez1.fcs","./test_data/c14_20190704_hnp_perf_11_0_Alez1.fcs"))
 #md <- get_fcs_metadata("./../../Toni_data/EC_200117_Freshly labelled PBMCs _1_0/Activation_Activation full panel unstim TILs_033.fcs")
-#md <- get_fcs_metadata("./../../cytofBrowser_project/Tape_data/Figure-1_S2_S3_raw/Figure-1_S2_S3_raw.fcs")
+#md <- get_fcs_metadata("./../../cytofBrowser_project/Tape_data/Figure-1_S2_S3_raw/Figure-1_S2_S3_processed.fcs")
 
 #' extract metadata for build-in test dataset
 #'
@@ -99,7 +99,10 @@ get_fcs_panel <- function(fcs_raw){
   panel <- panel[sapply(panel$name, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
   panel <- panel[sapply(panel$desc, function(x) !any(sapply(tech_patterns$computational_tech, function(y) grepl(y,x)))),]
   panel <- panel[!is.na(panel$desc),]
-  panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) paste(x[-c(1)], sep = "_", collapse = "_"))
+  panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x){
+    if(length(x) <= 1){return(x)}
+    return(paste(x[-c(1)], sep = "_", collapse = "_"))
+  })
   #panel$antigen <- sapply(strsplit(panel$desc, "_"), function(x) x[length(x)])
   #panel$antigen <- gsub(" \\(v)", "", panel$antigen)
   panel$marker_class <- "type"
@@ -254,8 +257,9 @@ scatter_plot_data_prep <- function(fcs_raw, use_markers, sampling_size = 0.5, me
 
   ## How many cells to downsample per-sample
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)             ################ Number of cells to ploting
-  tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
-  if(!is.null(size_fuse) & (sum(tsne_ncells) > size_fuse)){tsne_ncells <- as.integer((tsne_ncells/sum(tsne_ncells))*size_fuse)}
+  tsne_ncells <- as.integer((table(sample_ids) + 0.1) * sampling_size)
+  if((!is.null(size_fuse) & !is.na(size_fuse)) & (sum(tsne_ncells) > size_fuse)){
+    tsne_ncells <- as.integer((tsne_ncells/sum(tsne_ncells))*size_fuse)}
   names(tsne_ncells) <- names(table(sample_ids))
 
   ## Get subsampled indices

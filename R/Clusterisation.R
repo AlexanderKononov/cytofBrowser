@@ -67,6 +67,9 @@ get_optimal_clusters <- function(mc, rate_var_expl = 0.9){
   return(optimum)
 }
 
+### test
+#get_optimal_clusters(mc, rate_var_expl = 0.9)
+
 ##### Create the cluster annotation separated by samples
 #' Create the cluster annotation separated by samples
 #'
@@ -225,7 +228,8 @@ get_inds_subset <- function(fcs_raw, sampling_size = 0.5, size_fuse = 5000){
   inds <- split(1:length(sample_ids), sample_ids)
   #tsne_ncells <- pmin(table(sample_ids), sampling_size)
   tsne_ncells <- as.integer((table(sample_ids) + 1) * sampling_size)
-  if(!is.null(size_fuse) & (sum(tsne_ncells) > size_fuse)){tsne_ncells <- as.integer((tsne_ncells/sum(tsne_ncells))*size_fuse)}
+  if((!is.null(size_fuse) & !is.na(size_fuse)) & (sum(tsne_ncells) > size_fuse)){
+    tsne_ncells <- as.integer((tsne_ncells/sum(tsne_ncells))*size_fuse)}
   names(tsne_ncells) <- names(table(sample_ids))
   tsne_inds <- lapply(names(inds), function(i){s <- sample(inds[[i]], tsne_ncells[i], replace = FALSE)})
   tsne_inds <- unlist(tsne_inds)
@@ -270,6 +274,13 @@ get_UMAP_dataframe <- function(fcs_raw, use_markers, clust_markers, tsne_inds, c
   colnames(umap_df) <- c(names(use_markers), "UMAP_1", "UMAP_2", "cluster")
   return(umap_df)
 }
+
+#umap_df <- get_UMAP_dataframe(fcs_raw, use_markers, use_markers, tsne_inds, cell_clustering, method = "UMAP", perplexity = 30, theta = 0.5, max_iter = 1000)
+#ggplot(umap_df,  aes(x = UMAP_1, y = UMAP_2, color = umap_df[,names(use_markers)[1]])) +
+#  geom_point(size = 0.8)
+#ggplot(umap_df,  aes(x = UMAP_1, y = UMAP_2, color = umap_df[,"cluster"])) +
+#  geom_point(size = 0.8)
+
 
 ##### Create the data table to draw the abundance barplot
 #' Create the data table to draw the abundance barplot

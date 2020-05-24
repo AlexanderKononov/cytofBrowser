@@ -97,12 +97,12 @@ cytofBrowser_server <- function(input, output){
   ##### Create "fcs_data" as reactive object to store the CyTOF data
   fcs_data <-reactiveValues()
   plots <-reactiveValues()
-  data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
+  data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000, size_fuse = 5000)
   observeEvent(input$butt_upload_dproc, {
-    if(is.null(input$test_data_dproc)){return(NULL)}
+    if(input$test_data_upload_dproc){fcs_data$md <- get_test_fcs_metadata(input$test_data_dproc)}
+    if((input$choose_fcs_dp == 0) & !input$test_data_upload_dproc){return(NULL)}
     withProgress(message = "Extraction data", min =0, max = 7, value = 0,{
       ## Get row data fcs files
-      if(input$test_data_upload_dproc){fcs_data$md <- get_test_fcs_metadata(input$test_data_dproc)}
       if(!input$test_data_upload_dproc){
         fcs_data$md <- get_fcs_metadata(parseFilePaths(roots, input$choose_fcs_dp)$datapath)}
       incProgress(1, detail = "Upload data" )
@@ -123,8 +123,8 @@ cytofBrowser_server <- function(input, output){
       if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
       fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                    perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
+                                    perplexity = data_prep_settings$perplexity, theta = data_prep_settings$theta,
+                                    max_iter = data_prep_settings$max_iter, size_fuse = data_prep_settings$size_fuse)
       incProgress(1, detail = "Extraction fcs cluster info")
       if(input$extr_clust_dproc){
         withProgress(message = "Clusters from fcs files", min =0, max = 7, value = 0,{
@@ -148,7 +148,7 @@ cytofBrowser_server <- function(input, output){
           method_clust <- "UMAP"
           if(!is.null(input$n_cell_plot_clasterisation)){sampling_size_clust <- as.numeric(input$n_cell_plot_clasterisation)}
           if(!is.null(input$method_plot_clasterisation)){method_clust <- input$method_plot_clasterisation}
-          tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size_clust)
+          tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size_clust, size_fuse = cluster_settings$size_fuse)
           clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                        clust_markers = fcs_data$use_markers, tsne_inds = tsne_inds,
                                                        cell_clustering = clusterisation$cell_clustering, method = method_clust,
@@ -162,6 +162,9 @@ cytofBrowser_server <- function(input, output){
       incProgress(1)
     })
   })
+
+  #### reaction to button "size_fuse" in "Data processing" section
+  observeEvent(input$size_fuse_dproc, {if(!input$size_fuse_dproc){data_prep_settings$size_fuse <- NA}})
 
   #### reaction to button "Transform" in "Data processing" section: transformation fsc_data
   observeEvent(input$butt_trans_dproc, {
@@ -186,8 +189,8 @@ cytofBrowser_server <- function(input, output){
       if(!is.null(input$n_cell_plot_data_preparation)){sampling_size <- as.numeric(input$n_cell_plot_data_preparation)}
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
       fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                              perplexity = data_prep_settings$perplexity,
-                                              theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
+                                              perplexity = data_prep_settings$perplexity, theta = data_prep_settings$theta,
+                                              max_iter = data_prep_settings$max_iter, size_fuse = data_prep_settings$size_fuse)
       incProgress(1)
     })
   })
@@ -256,8 +259,8 @@ cytofBrowser_server <- function(input, output){
       if(!is.null(input$method_plot_data_preparation)){method <- input$method_plot_data_preparation}
       incProgress(3)
       fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                    perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
+                                    perplexity = data_prep_settings$perplexity, theta = data_prep_settings$theta,
+                                    max_iter = data_prep_settings$max_iter, size_fuse = data_prep_settings$size_fuse)
       incProgress(4)
     })
   })
@@ -275,8 +278,8 @@ cytofBrowser_server <- function(input, output){
       fcs_data$use_markers <- fcs_data$use_markers[!(names(fcs_data$use_markers) %in% input$exclude_mk_data_preparation)]
       incProgress(3, detail = "Excluding")
       fcs_data$tSNE <- scatter_plot_data_prep(fcs_data$fcs_raw, fcs_data$use_markers, sampling_size = sampling_size, method = method,
-                                    perplexity = data_prep_settings$perplexity,
-                                    theta = data_prep_settings$theta, max_iter = data_prep_settings$max_iter, size_fuse = 5000)
+                                    perplexity = data_prep_settings$perplexity, theta = data_prep_settings$theta,
+                                    max_iter = data_prep_settings$max_iter, size_fuse = data_prep_settings$size_fuse)
       incProgress(4, detail = "Redrawing")
     })
   })
@@ -352,7 +355,7 @@ cytofBrowser_server <- function(input, output){
 
   ##### Create "clusterisation" as reactive object to store the cluster information
   clusterisation <- reactiveValues()
-  cluster_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000)
+  cluster_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000, size_fuse = 5000)
 
   observeEvent(input$start_clusterization, {
     withProgress(message = "Clustering", min =0, max = 7, value = 0,{
@@ -383,7 +386,7 @@ cytofBrowser_server <- function(input, output){
       method <- "UMAP"
       if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
       if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
+      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size, size_fuse = cluster_settings$size_fuse)
       clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                    clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
                                                    cell_clustering = clusterisation$cell_clustering, method = method,
@@ -394,6 +397,9 @@ cytofBrowser_server <- function(input, output){
       incProgress(1)
     })
   })
+
+  #### reaction to button "size_fuse" in "Clustering" section
+  observeEvent(input$size_fuse_clust, {if(!input$size_fuse_clust){cluster_settings$size_fuse <- NA}})
 
   ##### Redrawing plot after chanch number of draw cells ar methods
   observeEvent(input$redraw_clasterisation, {
@@ -406,7 +412,7 @@ cytofBrowser_server <- function(input, output){
       method <- "UMAP"
       if(!is.null(input$n_cell_plot_clasterisation)){sampling_size <- as.numeric(input$n_cell_plot_clasterisation)}
       if(!is.null(input$method_plot_clasterisation)){method <- input$method_plot_clasterisation}
-      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size)
+      tsne_inds <- get_inds_subset(fcs_data$fcs_raw, sampling_size = sampling_size, size_fuse = cluster_settings$size_fuse)
       incProgress(1)
       clusterisation$umap_df <- get_UMAP_dataframe(fcs_raw = fcs_data$fcs_raw, use_markers = fcs_data$use_markers,
                                                    clust_markers = clusterisation$clust_markers, tsne_inds = tsne_inds,
@@ -504,17 +510,14 @@ cytofBrowser_server <- function(input, output){
   output$scatter_plot_clust <- renderPlot({
     if(is.null(clusterisation$umap_df)){return(NULL)}
 
-    print("Drawing UMAP")
-
     focus_node <- input$current_node_id
-    print(focus_node)
     plt <- ggplot(clusterisation$umap_df,  aes(x = UMAP_1, y = UMAP_2, color = clusterisation$umap_df[,input$mk_target_clusterisation])) +
       geom_point(size = 0.8)
     if(input$mk_target_clusterisation == 'cluster'){
       plt <- plt + scale_color_manual(values = as.character(clusterisation$nodes$color))
     }
     if(input$mk_target_clusterisation != 'cluster'){
-      plt <- plt + scale_color_gradient2(midpoint=0.5, low='blue', mid='white', high='red')
+      plt <- plt + scale_color_gradient2(midpoint=0.5, low='blue', mid='gray', high='red')
     }
     plt <- plt + geom_point(data = clusterisation$umap_df[clusterisation$umap_df$cluster == focus_node,], colour = 'black', size = 1)+
       labs(color = input$mk_target_clusterisation)+
@@ -536,6 +539,7 @@ cytofBrowser_server <- function(input, output){
                      tags$h4("Options of plotting"),
                      numericInput("n_cell_plot_data_preparation",
                                   label = h5("Cell fraction to display"), value = 0.5, step = 0.1),
+                     materialSwitch(inputId = 'size_fuse_dproc', label = h4("Size fuse"), value = TRUE),
                      selectInput("method_plot_data_preparation", label = h5("Visualisation method"),
                                  choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
                                  selected = "tSNE"),
@@ -577,6 +581,7 @@ cytofBrowser_server <- function(input, output){
                      tags$h4("Options of plotting"),
                      numericInput("n_cell_plot_clasterisation",
                                   label = h4("Cell fraction to display"), value = 0.5, step = 0.1),
+                     materialSwitch(inputId = 'size_fuse_clust', label = h4("Size fuse"), value = TRUE),
                      selectInput("method_plot_clasterisation", label = h4("Visualisation method"),
                                  choices = list("tSNE" = "tSNE", "UMAP" = "UMAP"),
                                  selected = "UMAP"),
