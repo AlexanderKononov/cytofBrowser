@@ -20,6 +20,7 @@ cytofBrowserGUI <-function(){
     dashboardSidebar(
       sidebarMenu(
         menuItem("Data", tabName = 'data_processing', icon = icon("bars")),
+        menuItem("Gating", tabName = 'gating', icon = icon("door-open")),
         menuItem("Exploration", tabName = 'data_exploration', icon = icon("chart-area")),
         menuItem("Correlation", tabName = 'data_correlation', icon = icon("braille")),
         menuItem("Cross-panel", tabName = 'data_crosspanel', icon = icon("clone"))
@@ -153,7 +154,9 @@ cytofBrowserGUI <-function(){
                                       )
                                )
                              ),
-                             plotOutput('abundance_clust')
+                             fluidRow(
+                               plotOutput('abundance_clust')
+                             )
                     )
                   ),
                  uiOutput('network_clust_ui')
@@ -161,6 +164,59 @@ cytofBrowserGUI <-function(){
         ),
 
         # Second tab content
+        tabItem(tabName = 'gating',
+                fluidRow(
+                  tabBox(
+                    tabPanel("Gating",
+                             uiOutput('gating_api_ui')
+                    ),
+                    tabPanel("Gate management",
+                             uiOutput("mergeing_gates_ui"),
+                             hr(),
+                             uiOutput("rename_gates_ui")
+                    ),
+                    tabPanel("Cells management",
+                             uiOutput('extract_cell_annotation_ui'),
+                             hr(),
+                             #uiOutput('convert_cells_annotation_ui')
+                    ),
+                    tabPanel("Save",
+                             uiOutput('save_cell_annaotation')
+                    )
+                  ),
+                  box(uiOutput('plot_for_gating_ui'),
+                      fluidRow(
+                        column(6,
+                               textInput('new_gate_name', label = h4("Name of new gated cells"), value = "marker1+/marker2+")
+                        ),
+                        column(6,
+                               actionButton("gete_chosen_cells", label = "Gate chosen cells")
+                        )
+                      )
+                  )
+                ),
+                fluidRow(
+                  box(
+                    fluidRow(
+                      column(1),
+                      column(10,
+                             verbatimTextOutput('gating_text')
+                      )
+                    )
+                  ),
+                  box(
+                    fluidRow(
+                      column(1),
+                      column(10,
+                             #plotOutput('gate_antology_graph')
+                             visNetworkOutput('gate_antology_graph')
+                      )
+                    )
+                  )
+                )
+        ),
+
+        # Third tab content
         tabItem(tabName = 'data_exploration',
                 fluidRow(
                   box(
@@ -205,7 +261,7 @@ cytofBrowserGUI <-function(){
                 )
         ),
 
-        # Third tab content
+        # Fourth tab content
         tabItem(tabName = 'data_correlation',
                 fluidRow(
                   infoBoxOutput('iBox_abund_corr'),
@@ -306,7 +362,7 @@ cytofBrowserGUI <-function(){
                 )
         ),
 
-        # Fourth tab content
+        # Fifth tab content
         tabItem(tabName = 'data_crosspanel',
                 fluidRow(
                   tabBox(

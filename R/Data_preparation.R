@@ -138,6 +138,30 @@ get_use_marker <- function(panel){
 ### test
 #use_markers <- get_use_marker(panel)
 
+#' Create entire named vector with obsermations: markers,clusters, qc etc.
+#'
+#' @param fcs_raw
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_entire_panel <- function(fcs_raw){
+  tmp <- as.data.frame(flowCore::pData(flowCore::parameters(fcs_raw[[1]]))[,c("name", "desc")])
+  rownames(tmp) <- NULL
+  tmp$antigen <- sapply(strsplit(tmp$desc, "_"), function(x){
+    if(length(x) <= 1){return(x)}
+    return(paste(x[-c(1)], sep = "_", collapse = "_"))
+  })
+  entire_panel <- as.character(tmp$name)
+  names(entire_panel) <- tmp$antigen
+  return(entire_panel)
+}
+
+### test
+#entire_panel <- get_entire_panel(fcs_raw)
+
+
 ##### Upload data from fcs files
 upload_fcs_data <- function(fcs_files){
   md <- get_fcs_metadata(fcs_files)
@@ -146,6 +170,7 @@ upload_fcs_data <- function(fcs_files){
   use_markers <- get_use_marker(panel)
   return(list(fcs_raw,md, panel, use_markers))
 }
+
 
 #### Transformation from "count" to "asinh" data
 #' Transformation from "count" to "asinh" data
@@ -157,15 +182,15 @@ upload_fcs_data <- function(fcs_files){
 #' @return flowSet object with transform data by asinh function and divided
 #' by cofactor
 #' @importClassesFrom flowCore flowSet
-#' @importFrom flowCore fsApply exprs "exprs<-"
+#' @importFrom flowCore fsApply exprs
 #'
 #' @examples
-asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
-  if(is.null(use_marker)){
-    computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
+asinh_transformation <- function(fcs_raw, cofactor = 5, use_markers = NULL){
+  markers <- use_markers
+  if(is.null(use_markers)){
+    computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE", "clust")
     markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
   }
-  markers <- use_marker
   fcs_asinh <- flowCore::fsApply(fcs_raw, function(x, cf = cofactor, mk = markers){
     exprs(x)[,mk] <- asinh(exprs(x)[,mk] / cf)
     return(x)})
@@ -174,6 +199,7 @@ asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
 
 ### test
 #fcs_raw <- asinh_transformation(fcs_raw, 5)
+
 
 ##### Transformation to a from 0 to 1 variable and removing outliers
 #' Transformation to a from 0 to 1 variable and removing outliers
@@ -189,12 +215,12 @@ asinh_transformation <- function(fcs_raw, cofactor = 5, use_marker = NULL){
 #' @importFrom matrixStats colQuantiles
 #'
 #' @examples
-outlier_by_quantile_transformation <- function(fcs_raw, quantile = 0.01, use_marker = NULL){
-  if(is.null(use_marker)){
+outlier_by_quantile_transformation <- function(fcs_raw, quantile = 0.01, use_markers = NULL){
+  markers <- use_markers
+  if(is.null(use_markers)){
     computational_tech <- c("Time", "Event", "length","Center", "Offset", "Width", "Residual", "tSNE")
     markers <- colnames(fcs_raw[[1]])[sapply(colnames(fcs_raw[[1]]), function(x) !any(sapply(computational_tech, function(y) grepl(y,x))))]
   }
-  markers <- use_marker
   fcs_outlier_by_quantile <- flowCore::fsApply(fcs_raw, function(x, ql = quantile, mk = markers){
     rng <- matrixStats::colQuantiles(exprs(x)[,mk], probs = c(ql, 1-ql))
     expr_data <- t((t(exprs(x)[,mk]) - rng[, 1]) / (rng[, 2] - rng[, 1]))
@@ -224,6 +250,8 @@ get_cell_number <- function(fcs_raw){
   return(cell_number)
 }
 
+### test
+#cell_number <- get_cell_number(fcs_raw)
 
 #################
 ### tSNE plot ###

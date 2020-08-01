@@ -18,6 +18,7 @@
 #' @importFrom flowCore write.flowSet
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom corrplot corrplot
+#' @importFrom grDevices colorRampPalette
 #' @importFrom DT renderDataTable datatable
 #' @importFrom neo4r neo4j_api
 #' @importFrom ComplexHeatmap Heatmap
@@ -98,6 +99,9 @@ cytofBrowser_server <- function(input, output){
   fcs_data <-reactiveValues()
   plots <-reactiveValues()
   data_prep_settings <- reactiveValues(perplexity = 30, theta = 0.5, max_iter = 1000, size_fuse = 5000)
+  ctype <- reactiveValues()
+  gates <- reactiveValues()
+
   observeEvent(input$butt_upload_dproc, {
     if(input$test_data_upload_dproc){fcs_data$md <- get_test_fcs_metadata(input$test_data_dproc)}
     if((length(input$choose_fcs_dp) <= 1) & !input$test_data_upload_dproc){return(NULL)}
@@ -158,6 +162,18 @@ cytofBrowser_server <- function(input, output){
           clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
                                                                  cell_clustering = clusterisation$cell_clustering)
         })
+      }
+
+      ## Add primer column to cell type data frame and gates data frame
+      fcs_data$entire_panel <- get_entire_panel(fcs_raw = fcs_data$fcs_raw)
+      gates$gates <- data.frame(all_cells = rep(TRUE, sum(fcs_data$cell_number$cell_nmbr)))
+      ctype$ctype <- data.frame(all_cells = rep("cell", sum(fcs_data$cell_number$cell_nmbr)),
+                                samples = rep(fcs_data$cell_number$smpl, fcs_data$cell_number$cell_nmbr))
+
+      gates$antology <- data.frame(name = "all_cells", parent = NA)
+      rownames(gates$antology) <- gates$antology$name
+      if(!is.null(clusterisation$cell_clustering)){
+        ctype$ctype$cell_clustering <- clusterisation$cell_clustering
       }
       incProgress(1)
     })
@@ -350,6 +366,261 @@ cytofBrowser_server <- function(input, output){
   )
 
   ########################
+  ###      Gating      ###
+  ########################
+
+  ##### Create UI to set the gating plot
+  output$gating_api_ui <- renderUI({
+    if(is.null(gates$gates)){return(NULL)}
+    if(is.null(fcs_data$entire_panel)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             selectInput('gating_subset', label = h4("Which data use for gating"),
+                         choices = colnames(gates$gates), selected = 1),
+             selectInput('gating_mk1', label = h4("Marker for X"),
+                         choices = names(fcs_data$entire_panel), selected = 1),
+             selectInput('gating_mk2', label = h4("Marker for Y"),
+                         choices = names(fcs_data$entire_panel), selected = 2),
+             actionButton("butt_plot_for_gating", label = "Plot for gating")
+      )
+    )
+  })
+
+  ##### Create UI to draw the gating plot
+  output$plot_for_gating_ui <- renderUI({
+    if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             plotOutput('scatter_plot_gating', brush = "brush_gating")
+      )
+    )
+  })
+
+  ### Make subset of data to gatingplot
+  observeEvent(input$butt_plot_for_gating, {
+    if(is.null(gates$gates)){return(NULL)}
+    if(is.null(input$gating_subset)){return(NULL)}
+    if(is.null(input$gating_mk1)){return(NULL)}
+    if(is.null(input$gating_mk2)){return(NULL)}
+    withProgress(message = "Gate drawing", min =0, max = 2, value = 0,{
+      incProgress(1)
+      gates$gated_data_subset <- get_data_for_gating(fcs_raw = fcs_data$fcs_raw,
+                                                     gating_subset = gates$gates[,input$gating_subset],
+                                                     gating_mk1 = fcs_data$entire_panel[input$gating_mk1],
+                                                     gating_mk2 = fcs_data$entire_panel[input$gating_mk2])
+      incProgress(1)
+    })
+  })
+
+  ### Drawing interactive dencity plot for gating
+  output$scatter_plot_gating <- renderPlot({
+    if(is.null(gates$gated_data_subset)){return(NULL)}
+    colfunc <- grDevices::colorRampPalette(c("black", "red", "yellow"))
+    min_mk1 <- min(gates$gated_data_subset$gating_mk1)
+    max_mk1 <- max(gates$gated_data_subset$gating_mk1)
+    min_mk2 <- min(gates$gated_data_subset$gating_mk2)
+    max_mk2 <- max(gates$gated_data_subset$gating_mk2)
+    plots$scatter_plot_gating <- ggplot(gates$gated_data_subset, aes(x = gating_mk1, y = gating_mk2)) +
+      ylim((min_mk2 - 0.1*(max_mk2 - min_mk2)),
+           (max_mk2 + 0.1*(max_mk2 - min_mk2))) +
+      xlim((min_mk1 - 0.1*(max_mk1 - min_mk1)),
+           (max_mk1 + 0.1*(max_mk1 - min_mk1))) +
+      xlab(input$gating_mk1) +
+      ylab(input$gating_mk2) +
+      geom_point(size = 0.1) +
+      stat_density_2d(aes(fill = ..level..), geom = "polygon") +
+      scale_fill_gradientn(colours=colfunc(400))+
+      geom_density2d(colour="black") +
+      theme_bw() +
+      theme(legend.position = "none")
+    return(plots$scatter_plot_gating)
+  })
+
+  output$gating_text <- renderPrint({
+    if(is.null(input$brush_gating)){return(NULL)}
+    list(colnames(gates$gates), colnames(ctype$ctype))
+  })
+
+  observeEvent(input$gete_chosen_cells, {
+    if(is.null(input$brush_gating)){return(NULL)}
+    if(is.null(gates$gated_data_subset)){return(NULL)}
+    new_name <- paste0("Gate", as.character(ncol(gates$gates)+1), "_",
+                      input$gating_mk1, "_", input$gating_mk2, "_from_", strsplit(input$gating_subset, "_")[[1]][1])
+
+    if(!is.null(input$new_gate_name) & (input$new_gate_name != "marker1+/marker2+")){new_name <- input$new_gate_name}
+    original_cell_coordinates <- brushedPoints(gates$gated_data_subset, input$brush_gating, xvar = "gating_mk1", yvar = "gating_mk2")
+    original_cell_coordinates <- original_cell_coordinates$original_cell_coordinates
+    gates$gates$new_gate <- FALSE
+    gates$gates[original_cell_coordinates, "new_gate"] <- TRUE
+    if(any(grepl(new_name, colnames(gates$gates)))){
+      new_name <- paste0(new_name,"_",sum(grepl(new_name, colnames(gates$gates)))+1)}
+    colnames(gates$gates)[which(colnames(gates$gates) ==  "new_gate")] <- new_name
+
+    gates$antology <- rbind(gates$antology, data.frame(name = new_name, parent = input$gating_subset))
+    rownames(gates$antology) <- gates$antology$name
+  })
+
+  output$gate_antology_graph <- renderVisNetwork({
+    if(is.null(gates$antology)){return(NULL)}
+    nodes <- data.frame(id = gates$antology$name, label = gates$antology$name)
+    edges <- data.frame(from = gates$antology$parent, to = gates$antology$name)
+    edges <- edges[!is.na(edges$from),]
+
+    visNetwork(nodes, edges) %>%
+      visInteraction(hover = TRUE) %>%
+      visEvents(select = "function(nodes) { Shiny.onInputChange('gated_node_id', nodes.nodes);}") %>%
+      visHierarchicalLayout()
+  })
+
+  ##### Create UI to convert gates to cell types
+  output$mergeing_gates_ui <- renderUI({
+    if(is.null(gates$gates)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Convert gates to cell annotation"),
+             selectInput("gate_converting_method", label = h5("converting method"),
+                         choices = list("Pure selection" = 'pure', "Gates squeezing" = 'squeeze'),
+                         selected = 1),
+             selectInput("gates_to_convert_gating", label = h5("Choose gates"),
+                         choices = gates$antology$name[-1], multiple = TRUE),
+             actionButton("convert_gates", label = "Convert")
+      )
+    )
+  })
+
+  ##### Renew clusterisation reactive object after merging
+  observeEvent(input$convert_gates, {
+    ctype$ctype <- get_cell_type_from_gates(gates$gates, input$gates_to_convert_gating,
+                                            ctype$ctype, method = input$gate_converting_method)
+
+  })
+
+  ##### Create UI to rename gates
+  output$rename_gates_ui <- renderUI({
+    if(is.null(input$gated_node_id)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Rename gates"),
+             textInput('new_gate_name_gating', label = h5("Write new name"),
+                       value = as.character(input$gated_node_id)),
+             actionButton("rename_gates", label = "Rename")
+      )
+    )
+  })
+
+  ##### Renew gate reactive object after gate rename
+  observeEvent(input$rename_gates, {
+    if(is.null(input$new_gate_name_gating)){return(NULL)}
+    if(input$new_gate_name_gating == ""){return(NULL)}
+    levels(gates$antology$name)[levels(gates$antology$name) == input$gated_node_id] <- input$new_gate_name_gating
+    levels(gates$antology$parent)[levels(gates$antology$parent) == input$gated_node_id] <- input$new_gate_name_gating
+    rownames(gates$antology) <- gates$antology$name
+    colnames(gates$gates)[colnames(gates$gates) == input$gated_node_id] <- input$new_gate_name_gating
+  })
+
+  ##### Create UI to convert cell type to clusters
+  output$convert_cells_annotation_ui <- renderUI({
+    if(is.null(ctype$ctype)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Convert cell annotation to clusters"),
+             selectInput("ctype_to_convert_gates", label = h5("Choose cell annotation to clusters"),
+                         choices = colnames(ctype$ctype), multiple = FALSE),
+             actionButton("convert_ctype_to_clusters", label = "Convert")
+      )
+    )
+  })
+
+  ###### Set choosed cell type to clusters and update objects
+  #observeEvent(input$convert_ctype_to_clusters, {
+  #  withProgress(message = "Convert", min =0, max = 7, value = 0,{
+  #    clusterisation$cell_clustering <- ctype$ctype[, input$ctype_to_convert_gates]
+  #    incProgress(1)
+  #    clusterisation$cell_clustering_list <- lapply(unique(ctype$ctype$samples), function(x)
+  #      ctype$ctype[ctype$ctype$samples == x, input$ctype_to_convert_gates])
+  #    incProgress(1)
+  #    ## Estimation of the distance between clusters
+  #    clusterisation$clus_euclid_dist <- get_euclid_dist(fcs_data$fcs_raw, fcs_data$use_markers, clusterisation$cell_clustering)
+  #    incProgress(1)
+  #    ## Calculation of edges and nodes for graph
+  #    clusterisation$edges <- get_edges(clusterisation$clus_euclid_dist)
+  #    incProgress(1)
+  #    clusterisation$nodes <- get_nodes(clusterisation$edges, clusterisation$cell_clustering)
+  #    incProgress(1)
+  #    clusterisation$umap_df$cluster <- ctype$ctype[, input$ctype_to_convert_gates] ### Mistake
+  #    incProgress(1)
+  #    clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+  #    ## Renew data in cell type data frame
+  #    ctype$ctype$cell_clustering <- clusterisation$cell_clustering
+  #    incProgress(1)
+  #  })
+  #})
+
+  ##### UI for extraction data from fcs to add to cell annotation
+  output$extract_cell_annotation_ui <- renderUI({
+    if(is.null(ctype$ctype)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Extract cell annotations"),
+             selectInput("col_to_ctype_gates", label = h5("Choose data to add to cell annotation"),
+                         choices = names(fcs_data$entire_panel), multiple = TRUE),
+             actionButton("btm_col_to_ctype_gates", label = "Extract")
+      )
+    )
+  })
+
+  ##### Extraction data from fcs to add to cell annotation
+  observeEvent(input$btm_col_to_ctype_gates, {
+    if(is.null(ctype$ctype)){return(NULL)}
+    ctype$ctype <- get_add_cell_annotation_from_data(entire_panel = fcs_data$entire_panel,
+                                                     fcs_raw = fcs_data$fcs_raw, cell_annotation = ctype$ctype)
+  })
+
+  ##### UI for saving fcs files with cell annotations
+  output$save_cell_annaotation <- renderUI({
+    if(is.null(ctype$ctype)){return(NULL)}
+    fluidRow(
+      column(1),
+      column(10,
+             h4("Cell annotations to save in fcs"),
+             selectInput("save_cell_ann_col_names", label = h5("Choose cell annotation"),
+                         choices = colnames(ctype$ctype)[-1], multiple = TRUE),
+             h5("Saving the data for samples as FCS files with cell annotation"),
+             shinyDirButton('choose_panel_gate', "Folder choose", "Select a folder to save panel samples"),
+             hr(),
+             h5("Saved set of files can be used as panel data in a cross-panel analysiso"),
+             textInput("panel_name_gate", label = h4("Panel name"), value = "Panel1"),
+             hr(),
+             actionButton('dwn_panel_gate', label = "Save panel")
+      )
+    )
+  })
+
+  ##### Save sample data with cluster info as panal files
+  shinyDirChoose(input, 'choose_panel_gate', roots = roots)
+  observeEvent(input$dwn_panel_gate, {
+    if(is.null(input$choose_panel_gate)){return(NULL)}
+    if(is.null(ctype$ctype)){return(NULL)}
+    if(is.null(fcs_data$fcs_raw)){return(NULL)}
+    panel_folder_path <- parseDirPath(roots, input$choose_panel_gate)
+    panel_name <- input$panel_name_gate
+    if(is.null(panel_name)){panel_name <- "UNNAMED_PANEL"}
+    if(!is.null(panel_folder_path) | length(panel_folder_path) !=0 ){
+      clustered_fcs <- get_cell_annotation_fcs_files(fcs_raw = fcs_data$fcs_raw,
+                                                     cell_annotation = ctype$ctype,
+                                                     column_name = input$save_cell_ann_col_names)
+      filenames <- paste0("CyBr_", as.character(panel_name),"_", sampleNames(clustered_fcs), ".fcs")
+      flowCore::write.flowSet(clustered_fcs, outdir = panel_folder_path, filename = filenames)
+    }
+  })
+
+  ########################
   ###  Clusterisation  ###
   ########################
 
@@ -394,6 +665,8 @@ cytofBrowser_server <- function(input, output){
                                                    theta = cluster_settings$theta, max_iter = cluster_settings$max_iter)
       clusterisation$abundance_df <- get_abundance_dataframe(fcs_raw = fcs_data$fcs_raw,
                                                              cell_clustering = clusterisation$cell_clustering)
+      ## Add cluster data to cell type data frame
+      ctype$ctype$cell_clustering <- clusterisation$cell_clustering
       incProgress(1)
     })
   })
@@ -464,6 +737,8 @@ cytofBrowser_server <- function(input, output){
       clusterisation$umap_df$cluster <- cluster_merging(clusterisation$umap_df$cluster, input$cluster_to_merge_clusterisation)
       incProgress(1)
       clusterisation$umap_df$cluster <- as.factor(clusterisation$umap_df$cluster)
+      ## Renew data in cell type data frame
+      ctype$ctype$cell_clustering <- clusterisation$cell_clustering
       incProgress(1)
     })
   })
