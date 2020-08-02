@@ -4,7 +4,7 @@
 \alias{asinh_transformation}
 \title{Transformation from "count" to "asinh" data}
 \usage{
-asinh_transformation(fcs_raw, cofactor = 5, use_marker = NULL)
+asinh_transformation(fcs_raw, cofactor = 5, use_markers = NULL)
 }
 \arguments{
 \item{fcs_raw}{flowSet object}
