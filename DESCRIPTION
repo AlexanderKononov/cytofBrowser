@@ -34,7 +34,7 @@ Imports:
     matrixStats,
     reshape2,
     shiny,
-    shinyFiles (== 0.7.5),
+    shinyFiles,
     shinydashboard,
     shinyWidgets,
     umap,
