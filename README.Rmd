@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 ## cytofBrowser
 
 The package focuses on analysis of CyTOF proteomic data by graphical interface. It is of the pipeline which starts from FCS files which you get from the CyTOF machine. It allows preprocessing and transforms the data then getting the specific cell populations by markers as well as clustering cells, estimate the abundance of cell populations and find the correlations and patterns by high-throughput hypothesis testing algorithm. CytofBrowser supplies the tool to visualize explore and interact with data on each step of the pipeline.
+![picture](img/cytofBrowser_hallmarks.jpg)
 
 ## Graphical interface
 

@@ -13,6 +13,7 @@ clustering cells, estimate the abundance of cell populations and find
 the correlations and patterns by high-throughput hypothesis testing
 algorithm. CytofBrowser supplies the tool to visualize explore and
 interact with data on each step of the pipeline.
+![picture](img/cytofBrowser_hallmarks.jpg)
 
 ## Graphical interface
 
